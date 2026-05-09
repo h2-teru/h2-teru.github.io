@@ -43,7 +43,7 @@ const NODES: NodeDef[] = [
 ];
 const BOARD_RISK_COLOR: Record<Stage['risk'], string> = {
   LOW: '#4da3ff',
-  MED: '#55e6ff',
+  MED: '#ffb454',
   HIGH: '#ff4d6d',
 };
 const CITY_WORLD_SCALE = 2.35;
@@ -670,9 +670,13 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       group.position.set(p.x, 0, p.z);
       root.add(group);
 
-      const holoColor = riskColor.clone().lerp(new THREE.Color(0x7ee7ff), 0.7);
+      const riskWhiteMix = stage.risk === 'LOW' ? 0.24 : stage.risk === 'MED' ? 0.14 : 0.1;
+      const bodyColor = riskColor.clone().lerp(new THREE.Color(0xffffff), riskWhiteMix);
+      const auraColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.18);
+      const shellColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.08);
+      const edgeColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.24);
       const bodyMat = new THREE.MeshBasicMaterial({
-        color: holoColor.clone().lerp(new THREE.Color(0x00cfff), 0.72),
+        color: bodyColor,
         transparent: true,
         opacity: 0,
         side: THREE.FrontSide,
@@ -686,7 +690,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       const aura = new THREE.Sprite(
         new THREE.SpriteMaterial({
           map: towerGlowTexture,
-          color: holoColor.clone().lerp(new THREE.Color(0x4effff), 0.28),
+          color: auraColor,
           transparent: true,
           opacity: 0,
           blending: THREE.AdditiveBlending,
@@ -701,7 +705,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       const bloomShell = new THREE.Mesh(
         boxGeo,
         new THREE.MeshBasicMaterial({
-          color: holoColor.clone().lerp(new THREE.Color(0x00eaff), 0.78),
+          color: shellColor,
           transparent: true,
           opacity: 0,
           blending: THREE.AdditiveBlending,
@@ -717,7 +721,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       const holoShell = new THREE.Mesh(
         boxGeo,
         new THREE.MeshBasicMaterial({
-          color: holoColor.clone().lerp(new THREE.Color(0x21edff), 0.54),
+          color: bodyColor,
           transparent: true,
           opacity: 0,
           blending: THREE.AdditiveBlending,
@@ -730,7 +734,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       group.add(holoShell);
 
       const edgeMatLocal = new THREE.LineBasicMaterial({
-        color: 0x9cf7ff,
+        color: edgeColor,
         transparent: true,
         opacity: 0.78,
         blending: THREE.AdditiveBlending,
@@ -742,7 +746,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       group.add(edge);
 
       const glowMatLocal = new THREE.LineBasicMaterial({
-        color: 0x24e9ff,
+        color: riskColor,
         transparent: true,
         opacity: 0.4,
         blending: THREE.AdditiveBlending,
@@ -868,6 +872,13 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       });
 
       if (activeNow && selectedNode) {
+        const selectedStage = STAGES.find(stage => stage.id === selectedNode.id);
+        const selectedRiskColor = new THREE.Color(
+          selectedStage ? BOARD_RISK_COLOR[selectedStage.risk] : '#4da3ff',
+        );
+        ringMat.color.copy(selectedRiskColor.clone().lerp(new THREE.Color(0xffffff), 0.38));
+        blueRingMat.color.copy(selectedRiskColor);
+
         const p = svgToCityWorld(selectedNode.x, selectedNode.y);
         const orbitAngle =
           SELECTED_CAMERA_BASE_ANGLE + Math.max(0, now - selectedOrbitStartedAt) * SELECTED_CAMERA_ORBIT_SPEED;
