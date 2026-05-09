@@ -1,0 +1,11 @@
+import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
+import { useGameStore } from '../store/gameStore';
+import { CtaButton } from '../components/CtaButton';
+export function EnhancementScreen() {
+    const goHome = useGameStore((s) => s.goHome);
+    return (_jsxs("div", { className: "relative w-full h-full flex flex-col bg-black text-white font-mono overflow-hidden scanlines", children: [_jsxs("div", { className: "px-5 pt-4 pb-3 border-b border-white/[0.06] flex items-center justify-between", children: [_jsx("button", { onClick: goHome, className: "text-[10px] text-white tracking-[0.15em] hover:text-white transition-colors", children: "\u2190 BACK" }), _jsxs("div", { className: "text-[11px] text-[#4da3ff] tracking-wide", children: ["> augment.sys \u00B7 OFFLINE", _jsx("span", { className: "inline-block w-[5px] h-[9px] ml-0.5 align-middle bg-[#4da3ff] animate-flicker" })] })] }), _jsxs("div", { className: "flex-1 flex flex-col items-center justify-center px-8 gap-6", children: [_jsx("div", { className: "text-[48px] leading-none", style: { color: 'rgba(155,255,93,0.35)', textShadow: '0 0 20px rgba(155,255,93,0.15)' }, children: "\u2B21" }), _jsxs("div", { className: "text-center", children: [_jsx("div", { className: "text-[10px] tracking-[0.35em] text-white/25 mb-2", children: "// AUGMENT" }), _jsx("div", { className: "text-[22px] tracking-[0.12em] font-normal", style: { textShadow: '0 0 10px rgba(255,255,255,0.15)' }, children: "COMING SOON" }), _jsxs("div", { className: "text-[11px] text-white/30 mt-3 leading-relaxed", children: ["\u30B5\u30A4\u30D0\u30CD\u30C6\u30A3\u30AF\u30B9\u3084\u795E\u7D4C\u5F37\u5316\u3092", _jsx("br", {}), "\u30A2\u30C3\u30D7\u30B0\u30EC\u30FC\u30C9\u3067\u304D\u308B\u3088\u3046\u306B\u306A\u308B\u4E88\u5B9A"] })] })] }), _jsx("div", { className: "px-5 pb-6", children: _jsx(CtaButton, { onClick: goHome, variant: "ghost", className: "backdrop-blur-sm", style: {
+                        boxShadow: '0 4px 24px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.06) inset',
+                        color: '#ffffff',
+                        textShadow: 'none',
+                    }, children: "\u2190 BACK TO HIDEOUT" }) }), _jsx("div", { className: "absolute bottom-2 left-0 right-0 text-center text-[9px] text-white/12 tracking-[0.3em]", children: "v0.1.4 \u00B7 NULLIFIER" })] }));
+}
