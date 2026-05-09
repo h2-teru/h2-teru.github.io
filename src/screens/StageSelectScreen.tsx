@@ -1697,13 +1697,14 @@ export function StageSelectScreen() {
           left: 0,
           right: 0,
           zIndex: 50,
-          padding: '11px 15px',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.56) 58%, rgba(0,0,0,0.04) 100%)',
-          borderBottom: 'none',
+          padding: '12px 15px 14px',
+          background: 'linear-gradient(180deg, rgba(1,5,12,0.98) 0%, rgba(2,8,18,0.92) 66%, rgba(2,8,18,0.78) 100%)',
+          borderBottom: '1px solid rgba(77,163,255,0.18)',
+          backdropFilter: 'blur(8px) saturate(1.25)',
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          boxShadow: 'none',
+          boxShadow: '0 14px 36px rgba(0,0,0,0.54), 0 1px 0 rgba(255,255,255,0.035) inset',
         }}>
         <div
           aria-hidden
@@ -1711,13 +1712,13 @@ export function StageSelectScreen() {
             position: 'absolute',
             left: 0,
             right: 0,
-            bottom: -118,
-            height: 118,
+            bottom: -72,
+            height: 72,
             pointerEvents: 'none',
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0.26) 0%, rgba(1,5,12,0.18) 38%, rgba(3,11,22,0.06) 72%, transparent 100%)',
+            background: 'linear-gradient(to bottom, rgba(2,8,18,0.52) 0%, rgba(2,8,18,0.22) 48%, transparent 100%)',
           }}
         />
-        <div>
+        <div style={{ position: 'relative', zIndex: 1 }}>
           <button
             onClick={goHome}
             style={{
@@ -1739,7 +1740,7 @@ export function StageSelectScreen() {
             DARKNET BOARD
           </div>
         </div>
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'right' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 5, justifyContent: 'flex-end' }}>
             <div className="animate-flicker" style={{
               width: 6,

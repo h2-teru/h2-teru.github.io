@@ -63,9 +63,10 @@ export function ResultScreen() {
         />
       )}
 
-      <div className={`relative z-10 flex flex-col h-full p-6 transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`result-scroll relative z-10 h-full min-h-0 overflow-y-auto transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="result-inner flex min-h-full flex-col">
         {/* ── アウトカムヒーロー ── */}
-        <div className="scan-in">
+        <div className="result-hero scan-in">
           {success ? (
             <>
               <div className="text-[10px] text-[#4da3ff]/50 tracking-[0.35em] mb-2">
@@ -86,7 +87,7 @@ export function ResultScreen() {
               </div>
 
               {/* クレジットカウントアップ */}
-              <div className="mt-6 value-flash">
+              <div className="result-reward mt-6 value-flash">
                 <div className="text-[9px] text-white/30 tracking-[0.3em] mb-1">REWARD</div>
                 <div
                   className="leading-none font-normal tabular-nums"
@@ -136,7 +137,7 @@ export function ResultScreen() {
         </div>
 
         {/* ── ステータスグリッド ── */}
-        <div className="mt-5 grid grid-cols-2 gap-[6px]">
+        <div className="result-stats mt-5 grid grid-cols-2 gap-[6px]">
           <StatCell label="MISSION"   value={`#${String(level).padStart(3, '0')}`} />
           <StatCell label="LAST WAVE" value={`${elapsed.toFixed(1)}s`} />
           <StatCell label="ROTATIONS" value={String(rotations)} />
@@ -150,7 +151,7 @@ export function ResultScreen() {
 
         {/* ── 取得インテル ── */}
         {success && acquiredIntel.length > 0 && (
-          <div className="mt-5">
+          <div className="result-intel mt-5">
             <div className="text-[9px] tracking-[0.28em] text-white/25 mb-2">
               // INTEL ACQUIRED
             </div>
@@ -194,7 +195,7 @@ export function ResultScreen() {
 
         {/* システムメッセージ */}
         <div
-          className="mt-5 border-l-2 pl-4 text-[11px] text-white/40 leading-relaxed"
+          className="result-sys mt-5 border-l-2 pl-4 text-[11px] text-white/40 leading-relaxed"
           style={{ borderColor: success ? '#4da3ff' : '#ff4d6d40' }}
         >
           <div
@@ -217,7 +218,7 @@ export function ResultScreen() {
         </div>
 
         {/* ── ボタン ── */}
-        <div className="mt-auto pt-4 space-y-3">
+        <div className="result-actions mt-auto pt-4 space-y-3">
           {success ? (
             <CtaButton
               onClick={next}
@@ -239,16 +240,16 @@ export function ResultScreen() {
           <CtaButton
             onClick={goHome}
             variant="ghost"
-            className="backdrop-blur-sm"
+            className="result-secondary-action backdrop-blur-sm"
             style={{ color: '#ffffff', textShadow: 'none' }}
           >
             ← HIDEOUT
           </CtaButton>
         </div>
-      </div>
-
-      <div className={`absolute bottom-1.5 left-0 right-0 text-center text-[9px] text-white/12 tracking-[0.3em] z-10 transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
-        v0.1.4 · NULLIFIER
+        <div className="result-version mt-4 text-center text-[9px] text-white/12 tracking-[0.3em] transition-opacity duration-500">
+          v0.1.4 · NULLIFIER
+        </div>
+        </div>
       </div>
     </div>
   );
@@ -267,7 +268,7 @@ function StatCell({
 }) {
   return (
     <div
-      className="border bg-white/[0.02] p-3"
+      className="result-stat border bg-white/[0.02] p-3"
       style={{
         borderColor: accent
           ? 'rgba(77,163,255,0.25)'
