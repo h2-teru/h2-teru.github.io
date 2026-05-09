@@ -52,6 +52,7 @@ body {
 .result-scroll {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  overflow: hidden;
 }
 
 .result-scroll::-webkit-scrollbar {
@@ -59,7 +60,7 @@ body {
 }
 
 .result-inner {
-  padding: 24px 24px max(18px, env(safe-area-inset-bottom));
+  padding: clamp(18px, 3.2dvh, 24px) 24px max(14px, env(safe-area-inset-bottom));
 }
 
 @media (max-width: 480px) {
@@ -72,7 +73,7 @@ body {
   }
 }
 
-@media (max-height: 620px) {
+@media (max-height: 780px) {
   .app-frame {
     max-height: 100dvh;
   }
@@ -81,7 +82,10 @@ body {
     padding: 18px 24px max(12px, env(safe-area-inset-bottom));
   }
 
-  .result-reward,
+  .result-reward {
+    margin-top: 18px !important;
+  }
+
   .result-stats,
   .result-intel,
   .result-sys {
@@ -90,6 +94,11 @@ body {
 
   .result-stat {
     padding: 10px !important;
+  }
+
+  .result-intel-row {
+    padding-top: 7px !important;
+    padding-bottom: 7px !important;
   }
 
   .result-sys {
@@ -101,16 +110,30 @@ body {
     padding-top: 12px !important;
   }
 
-  .result-actions > * + * {
-    margin-top: 8px !important;
-  }
-
-  .result-secondary-action {
-    display: none !important;
-  }
-
   .result-version {
-    margin-top: 12px !important;
+    margin-top: 10px !important;
+  }
+}
+
+@media (max-height: 660px) {
+  .result-inner {
+    padding-top: 14px;
+  }
+
+  .result-hero .glitch-title {
+    font-size: clamp(30px, 10.5vw, 44px) !important;
+  }
+
+  .result-reward,
+  .result-stats,
+  .result-intel,
+  .result-sys {
+    margin-top: 10px !important;
+  }
+
+  .result-intel-note,
+  .result-version {
+    display: none !important;
   }
 }
 

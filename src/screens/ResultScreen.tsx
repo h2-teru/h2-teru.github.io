@@ -13,7 +13,6 @@ export function ResultScreen() {
   const clearedAt     = useGameStore((s) => s.clearedAt);
   const pendingReward = useGameStore((s) => s.pendingReward);
   const next   = useGameStore((s) => s.next);
-  const goHome = useGameStore((s) => s.goHome);
 
   const success  = outcome === 'stage_cleared';
   const elapsed  = startedAt ? ((clearedAt ?? performance.now()) - startedAt) / 1000 : 0;
@@ -63,8 +62,8 @@ export function ResultScreen() {
         />
       )}
 
-      <div className={`result-scroll relative z-10 h-full min-h-0 overflow-y-auto transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="result-inner flex min-h-full flex-col">
+      <div className={`result-scroll relative z-10 h-full min-h-0 overflow-hidden transition-opacity duration-500 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="result-inner flex h-full min-h-0 flex-col">
         {/* ── アウトカムヒーロー ── */}
         <div className="result-hero scan-in">
           {success ? (
@@ -159,7 +158,7 @@ export function ResultScreen() {
               {acquiredIntel.map(item => (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2 px-3 py-2"
+                  className="result-intel-row flex items-center gap-2 px-3 py-2"
                   style={{
                     background: 'rgba(255,120,0,0.05)',
                     border: '1px solid rgba(255,120,0,0.18)',
@@ -187,7 +186,7 @@ export function ResultScreen() {
                 </div>
               ))}
             </div>
-            <div className="text-[8px] text-white/20 tracking-[0.12em] mt-2">
+            <div className="result-intel-note text-[8px] text-white/20 tracking-[0.12em] mt-2">
               → BLACK MARKET で売却してクレジットに換金できます
             </div>
           </div>
@@ -218,7 +217,7 @@ export function ResultScreen() {
         </div>
 
         {/* ── ボタン ── */}
-        <div className="result-actions mt-auto pt-4 space-y-3">
+        <div className="result-actions mt-auto pt-4">
           {success ? (
             <CtaButton
               onClick={next}
@@ -237,14 +236,6 @@ export function ResultScreen() {
               &gt; BACK TO BOARD
             </CtaButton>
           )}
-          <CtaButton
-            onClick={goHome}
-            variant="ghost"
-            className="result-secondary-action backdrop-blur-sm"
-            style={{ color: '#ffffff', textShadow: 'none' }}
-          >
-            ← HIDEOUT
-          </CtaButton>
         </div>
         <div className="result-version mt-4 text-center text-[9px] text-white/12 tracking-[0.3em] transition-opacity duration-500">
           v0.1.4 · NULLIFIER
