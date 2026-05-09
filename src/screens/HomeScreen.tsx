@@ -329,8 +329,7 @@ function HideoutMarketButtonPreview({
 }) {
   const marketColor = '#ff7800';
   const signalColor = '#4da3ff';
-  const listedGoods = Math.min(6, Math.max(2, intelCount + 2));
-  const poweredSlots = Math.min(4, Math.max(1, Math.floor(coins / 500) + 1));
+  const creditLevel = Math.min(5, Math.max(1, Math.ceil(coins / 600)));
 
   return (
     <>
@@ -374,79 +373,62 @@ function HideoutMarketButtonPreview({
         }}
       >
         <defs>
-          <radialGradient id="hideout-market-shop-core" cx="45%" cy="50%" r="70%">
-            <stop offset="0%" stopColor={marketColor} stopOpacity="0.24" />
-            <stop offset="58%" stopColor={marketColor} stopOpacity="0.08" />
+          <radialGradient id="hideout-market-shop-core" cx="50%" cy="52%" r="68%">
+            <stop offset="0%" stopColor={marketColor} stopOpacity="0.2" />
+            <stop offset="54%" stopColor={marketColor} stopOpacity="0.07" />
             <stop offset="100%" stopColor={marketColor} stopOpacity="0" />
           </radialGradient>
-          <linearGradient id="hideout-market-shelf" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor={marketColor} stopOpacity="0.13" />
-            <stop offset="62%" stopColor={marketColor} stopOpacity="0.05" />
-            <stop offset="100%" stopColor={signalColor} stopOpacity="0.1" />
+          <linearGradient id="hideout-market-panel-line" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={marketColor} stopOpacity="0" />
+            <stop offset="48%" stopColor={marketColor} stopOpacity="0.82" />
+            <stop offset="100%" stopColor={marketColor} stopOpacity="0" />
           </linearGradient>
         </defs>
-        <rect x="22" y="38" width="238" height="74" fill="url(#hideout-market-shop-core)" opacity="0.95" />
-        <rect x="29" y="43" width="224" height="66" fill="url(#hideout-market-shelf)" stroke="rgba(255,120,0,0.22)" strokeWidth="0.8" />
+        <rect x="22" y="37" width="238" height="76" fill="url(#hideout-market-shop-core)" opacity="0.95" />
+        <line x1="38" y1="77" x2="244" y2="77" stroke="url(#hideout-market-panel-line)" strokeWidth="1.2" />
+        <line x1="64" y1="99" x2="218" y2="99" stroke="rgba(255,120,0,0.28)" strokeWidth="0.8" />
 
-        <g transform="translate(34 49)">
-          <rect x="0" y="0" width="75" height="12" fill="rgba(255,120,0,0.16)" stroke={marketColor} strokeWidth="0.7" strokeOpacity="0.64" />
-          <text x="37.5" y="8.5" textAnchor="middle" fontSize="6.5" letterSpacing="0.9" fill={marketColor} fontFamily="monospace">BUY GEAR</text>
-          <rect x="80" y="0" width="89" height="12" fill="rgba(77,163,255,0.09)" stroke={signalColor} strokeWidth="0.7" strokeOpacity="0.45" />
-          <text x="124.5" y="8.5" textAnchor="middle" fontSize="6.5" letterSpacing="0.75" fill={signalColor} fontFamily="monospace">UPGRADE BENCH</text>
-          <rect x="174" y="0" width="36" height="12" fill="rgba(4,9,18,0.9)" stroke="rgba(255,255,255,0.14)" strokeWidth="0.6" />
-          <text x="192" y="8.5" textAnchor="middle" fontSize="6" letterSpacing="0.6" fill="rgba(255,255,255,0.42)" fontFamily="monospace">PERM</text>
+        <g transform="translate(83 43)">
+          <path
+            d="M18 16 H98 L107 29 H9 Z"
+            fill="rgba(255,120,0,0.1)"
+            stroke={marketColor}
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+            strokeOpacity="0.82"
+          />
+          <path
+            d="M18 29 H98 V70 H18 Z"
+            fill="rgba(4,9,18,0.82)"
+            stroke={marketColor}
+            strokeWidth="1"
+            strokeOpacity="0.5"
+          />
+          <path d="M29 29 V16 M45 29 V16 M61 29 V16 M77 29 V16 M93 29 V16" stroke={marketColor} strokeWidth="0.8" strokeOpacity="0.38" />
+          <rect x="35" y="43" width="46" height="12" fill="rgba(255,120,0,0.14)" stroke={marketColor} strokeWidth="0.9" strokeOpacity="0.7" />
+          <text x="58" y="51.4" textAnchor="middle" fontSize="7" letterSpacing="1.2" fill={marketColor} fontFamily="monospace">GEAR</text>
+          <circle cx="58" cy="29" r="17" fill="rgba(255,120,0,0.08)" stroke={marketColor} strokeWidth="1.1" strokeOpacity="0.48" />
+          <path d="M50 28 H66 M58 20 V36" stroke={marketColor} strokeWidth="1.6" strokeLinecap="square" />
         </g>
 
-        <g transform="translate(34 66)">
-          {[
-            ['HEAT', '-18%', '450¢', marketColor],
-            ['ROUTE', 'NOISE', '900¢', signalColor],
-            ['CACHE', '+20%', '980¢', '#b44fff'],
-          ].map(([name, effect, price, color], i) => (
-            <g key={name} transform={`translate(${i * 53} 0)`}>
-              <rect x="0" y="0" width="48" height="37" fill="rgba(4,9,18,0.9)" stroke={String(color)} strokeWidth="0.9" strokeOpacity="0.68" />
-              <rect x="4" y="4" width="40" height="9" fill={`${String(color)}1f`} stroke={String(color)} strokeWidth="0.55" strokeOpacity="0.7" />
-              <text x="24" y="10.6" textAnchor="middle" fontSize="6" letterSpacing="0.7" fill={String(color)} fontFamily="monospace">{name}</text>
-              <text x="5" y="21" fontSize="5.6" letterSpacing="0.5" fill="rgba(255,255,255,0.55)" fontFamily="monospace">{effect}</text>
-              <rect x="4" y="26" width="18" height="7" fill={`${String(color)}24`} stroke={String(color)} strokeWidth="0.55" />
-              <text x="13" y="31.2" textAnchor="middle" fontSize="5.5" letterSpacing="0.35" fill={String(color)} fontFamily="monospace">{price}</text>
-              <rect x="26" y="26" width="18" height="7" fill="rgba(255,120,0,0.72)" />
-              <text x="35" y="31.4" textAnchor="middle" fontSize="5.8" letterSpacing="0.5" fill="#050505" fontFamily="monospace">BUY</text>
-            </g>
-          ))}
-        </g>
-
-        <g transform="translate(199 66)">
-          <rect x="0" y="0" width="44" height="37" fill="rgba(4,9,18,0.92)" stroke={signalColor} strokeWidth="0.9" strokeOpacity="0.58" />
-          <text x="22" y="8.2" textAnchor="middle" fontSize="5.7" letterSpacing="0.55" fill={signalColor} fontFamily="monospace">TIER I</text>
-          <path d="M12 14 H31 L27 10 M31 14 L27 18" fill="none" stroke={marketColor} strokeWidth="0.9" strokeOpacity="0.9" />
-          <text x="22" y="24.5" textAnchor="middle" fontSize="5.7" letterSpacing="0.55" fill={marketColor} fontFamily="monospace">TIER II</text>
-          {[0, 1, 2, 3].map((i) => (
+        <g transform="translate(46 86)">
+          {[0, 1, 2, 3, 4].map((i) => (
             <rect
               key={i}
-              x={8 + i * 7}
-              y={29}
-              width="5"
-              height="4"
-              fill={i < poweredSlots ? marketColor : 'rgba(255,255,255,0.12)'}
-              opacity={i < poweredSlots ? 0.76 : 0.25}
+              x={i * 10}
+              y={0}
+              width="6"
+              height={i < creditLevel ? 14 : 7}
+              fill={i < creditLevel ? marketColor : 'rgba(255,255,255,0.12)'}
+              opacity={i < creditLevel ? 0.74 : 0.28}
             />
           ))}
         </g>
 
-        <g transform="translate(42 115)" opacity="0.58">
-          <text x="0" y="3.5" fontSize="5.8" letterSpacing="0.7" fill="rgba(255,255,255,0.2)" fontFamily="monospace">STOCK</text>
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <rect
-              key={i}
-              x={34 + i * 28}
-              y="0"
-              width="18"
-              height="4"
-              fill={i < listedGoods ? marketColor : 'rgba(255,255,255,0.1)'}
-              opacity={i < listedGoods ? 0.72 : 0.22}
-            />
-          ))}
+        <g transform="translate(198 86)">
+          <rect x="0" y="0" width="14" height="14" fill="rgba(77,163,255,0.12)" stroke={signalColor} strokeWidth="0.8" strokeOpacity="0.55" />
+          <rect x="20" y="0" width="14" height="14" fill="rgba(255,120,0,0.12)" stroke={marketColor} strokeWidth="0.8" strokeOpacity="0.62" />
+          <path d="M15 7 H19" stroke="rgba(255,255,255,0.28)" strokeWidth="0.8" />
         </g>
       </svg>
       <div
@@ -469,7 +451,7 @@ function HideoutMarketButtonPreview({
             BLACK MARKET
           </div>
           <div style={{ fontSize: 8, color: signalColor, letterSpacing: '0.18em', whiteSpace: 'nowrap' }}>
-            {intelCount} FILES · UPGRADE
+            {intelCount} FILES
           </div>
         </div>
       </div>
