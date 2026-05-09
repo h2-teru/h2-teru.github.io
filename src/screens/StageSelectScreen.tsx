@@ -76,26 +76,6 @@ function getLocationTowerMetrics(stage: Stage) {
   };
 }
 
-function createTowerGlowTexture() {
-  const size = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d')!;
-  const gradient = ctx.createRadialGradient(size / 2, size / 2, 6, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(141,250,255,0.86)');
-  gradient.addColorStop(0.18, 'rgba(0,232,255,0.72)');
-  gradient.addColorStop(0.44, 'rgba(0,196,255,0.34)');
-  gradient.addColorStop(0.7, 'rgba(46,146,255,0.12)');
-  gradient.addColorStop(1, 'rgba(78,186,255,0)');
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, size, size);
-
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  return texture;
-}
-
 function getLatestUnlockedNode(completedCount: number) {
   const latestStage = STAGES.reduce<Stage | null>((latest, stage) => {
     if (completedCount < stage.requiredCompleted) return latest;
@@ -588,7 +568,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
     const targetWorlds = NODES.map(node => svgToCityWorld(node.x, node.y));
     const boxGeo = new THREE.BoxGeometry(1, 1, 1);
     const edgeGeo = new THREE.EdgesGeometry(boxGeo);
-    const towerGlowTexture = createTowerGlowTexture();
     const lowMat = new THREE.MeshStandardMaterial({
       color: 0x0b2034,
       roughness: 0.72,
@@ -656,7 +635,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       group: THREE.Group;
       core: THREE.Mesh;
       body: THREE.Mesh;
-      aura: THREE.Sprite;
       bloomShell: THREE.Mesh;
       holoShell: THREE.Mesh;
       edge: THREE.LineSegments;
@@ -673,7 +651,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
 
       const riskWhiteMix = stage.risk === 'LOW' ? 0.24 : stage.risk === 'MED' ? 0.14 : 0.1;
       const bodyColor = riskColor.clone().lerp(new THREE.Color(0xffffff), riskWhiteMix);
-      const auraColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.18);
       const shellColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.08);
       const edgeColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.24);
       const coreColor = riskColor.clone().lerp(new THREE.Color(0x06101c), 0.68);
@@ -701,21 +678,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       body.position.y = bodyHeight / 2;
       body.scale.set(bodyWidth, bodyHeight, bodyDepth);
       group.add(body);
-
-      const aura = new THREE.Sprite(
-        new THREE.SpriteMaterial({
-          map: towerGlowTexture,
-          color: auraColor,
-          transparent: true,
-          opacity: 0,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-          depthTest: false,
-        }),
-      );
-      aura.position.y = bodyHeight * 0.54;
-      aura.scale.set(bodyWidth * 8.6, bodyHeight * 2.7, 1);
-      group.add(aura);
 
       const bloomShell = new THREE.Mesh(
         boxGeo,
@@ -778,7 +740,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         group,
         core,
         body,
-        aura,
         bloomShell,
         holoShell,
         edge,
@@ -871,7 +832,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
 
         const bodyMat = tower.body.material as THREE.MeshBasicMaterial;
         const coreMat = tower.core.material as THREE.MeshStandardMaterial;
-        const auraMat = tower.aura.material as THREE.SpriteMaterial;
         const bloomShellMat = tower.bloomShell.material as THREE.MeshBasicMaterial;
         const holoShellMat = tower.holoShell.material as THREE.MeshBasicMaterial;
         const edgeMatLocal = tower.edge.material as THREE.LineBasicMaterial;
@@ -880,12 +840,10 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         tower.core.visible = unlocked;
         coreMat.emissiveIntensity = selected ? 0.72 + pulse * 0.14 : 0.48 + pulse * 0.1;
         bodyMat.opacity = unlocked ? (selected ? 0.24 + pulse * 0.04 : 0.16 + pulse * 0.04) : 0;
-        auraMat.opacity = unlocked ? (selected ? 0.46 + pulse * 0.12 : 0.28 + pulse * 0.1) : 0;
-        bloomShellMat.opacity = unlocked ? (selected ? 0.09 + pulse * 0.04 : 0.055 + pulse * 0.035) : 0;
-        holoShellMat.opacity = unlocked ? (selected ? 0.1 + pulse * 0.04 : 0.065 + pulse * 0.035) : 0;
+        bloomShellMat.opacity = unlocked ? (selected ? 0.12 + pulse * 0.04 : 0.07 + pulse * 0.035) : 0;
+        holoShellMat.opacity = unlocked ? (selected ? 0.13 + pulse * 0.04 : 0.08 + pulse * 0.035) : 0;
         edgeMatLocal.opacity = unlocked ? (selected ? 0.74 : 0.62 + pulse * 0.05) : 0.05;
         glowMatLocal.opacity = unlocked ? (selected ? 0.46 : 0.34 + pulse * 0.1) : 0.02;
-        tower.aura.visible = unlocked;
         tower.bloomShell.visible = unlocked;
         tower.holoShell.visible = unlocked;
       });
@@ -963,7 +921,6 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         if (Array.isArray(material)) material.forEach(m => m.dispose());
         else material?.dispose();
       });
-      towerGlowTexture.dispose();
       renderer.dispose();
     };
   }, []);
