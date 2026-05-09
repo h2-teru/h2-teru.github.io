@@ -654,6 +654,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       id: number;
       requiredCompleted: number;
       group: THREE.Group;
+      core: THREE.Mesh;
       body: THREE.Mesh;
       aura: THREE.Sprite;
       bloomShell: THREE.Mesh;
@@ -675,6 +676,20 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       const auraColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.18);
       const shellColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.08);
       const edgeColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.24);
+      const coreColor = riskColor.clone().lerp(new THREE.Color(0x06101c), 0.68);
+      const coreMat = new THREE.MeshStandardMaterial({
+        color: coreColor,
+        emissive: riskColor.clone().multiplyScalar(0.38),
+        emissiveIntensity: 0.55,
+        roughness: 0.48,
+        metalness: 0.34,
+      });
+      const core = new THREE.Mesh(boxGeo, coreMat);
+      core.position.y = bodyHeight / 2;
+      core.scale.set(bodyWidth * 0.84, bodyHeight * 0.985, bodyDepth * 0.84);
+      core.visible = false;
+      group.add(core);
+
       const bodyMat = new THREE.MeshBasicMaterial({
         color: bodyColor,
         transparent: true,
@@ -761,6 +776,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         id: node.id,
         requiredCompleted: stage.requiredCompleted,
         group,
+        core,
         body,
         aura,
         bloomShell,
@@ -854,16 +870,19 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         tower.group.scale.setScalar(1);
 
         const bodyMat = tower.body.material as THREE.MeshBasicMaterial;
+        const coreMat = tower.core.material as THREE.MeshStandardMaterial;
         const auraMat = tower.aura.material as THREE.SpriteMaterial;
         const bloomShellMat = tower.bloomShell.material as THREE.MeshBasicMaterial;
         const holoShellMat = tower.holoShell.material as THREE.MeshBasicMaterial;
         const edgeMatLocal = tower.edge.material as THREE.LineBasicMaterial;
         const glowMatLocal = tower.glow.material as THREE.LineBasicMaterial;
 
-        bodyMat.opacity = unlocked ? (selected ? 0.48 + pulse * 0.06 : 0.34 + pulse * 0.06) : 0.08;
-        auraMat.opacity = unlocked ? (selected ? 0.66 + pulse * 0.16 : 0.46 + pulse * 0.14) : 0;
-        bloomShellMat.opacity = unlocked ? (selected ? 0.16 + pulse * 0.06 : 0.1 + pulse * 0.05) : 0;
-        holoShellMat.opacity = unlocked ? (selected ? 0.18 + pulse * 0.06 : 0.12 + pulse * 0.06) : 0;
+        tower.core.visible = unlocked;
+        coreMat.emissiveIntensity = selected ? 0.72 + pulse * 0.14 : 0.48 + pulse * 0.1;
+        bodyMat.opacity = unlocked ? (selected ? 0.24 + pulse * 0.04 : 0.16 + pulse * 0.04) : 0;
+        auraMat.opacity = unlocked ? (selected ? 0.46 + pulse * 0.12 : 0.28 + pulse * 0.1) : 0;
+        bloomShellMat.opacity = unlocked ? (selected ? 0.09 + pulse * 0.04 : 0.055 + pulse * 0.035) : 0;
+        holoShellMat.opacity = unlocked ? (selected ? 0.1 + pulse * 0.04 : 0.065 + pulse * 0.035) : 0;
         edgeMatLocal.opacity = unlocked ? (selected ? 0.74 : 0.62 + pulse * 0.05) : 0.05;
         glowMatLocal.opacity = unlocked ? (selected ? 0.46 : 0.34 + pulse * 0.1) : 0.02;
         tower.aura.visible = unlocked;
