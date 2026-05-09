@@ -364,6 +364,8 @@ export function ShopScreen() {
         .sort((a, b) => a.price - b.price);
     const availableEquip = filteredEquip.filter(equip => !knownPurchasedEquip.includes(equip.id));
     const ownedEquip = filteredEquip.filter(equip => knownPurchasedEquip.includes(equip.id));
+    const availableRows = Math.max(1, Math.ceil(availableEquip.length / 2));
+    const ownedRows = Math.max(1, Math.ceil(ownedEquip.length / 2));
     const marketSignal = tab === 'buy'
         ? `${EQUIPMENT_LIST.length - knownPurchasedEquip.length} PERMANENT UPGRADES AVAILABLE`
         : tab === 'installed'
@@ -485,7 +487,7 @@ export function ShopScreen() {
                             }, children: tab === 'sell' ? (filteredIntel.length === 0 ? (_jsxs("div", { style: {
                                 flex: 1, display: 'flex', flexDirection: 'column',
                                 alignItems: 'center', justifyContent: 'center', gap: 12,
-                            }, children: [_jsx("div", { style: { fontSize: 32, opacity: 0.2 }, children: "\u25CE" }), _jsx("div", { style: { fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em' }, children: intel.length === 0 ? 'NO INTEL IN INVENTORY' : 'NO MATCHING INTEL' }), _jsx("div", { style: { fontSize: 8, color: 'rgba(255,255,255,0.12)', letterSpacing: '0.1em' }, children: intel.length === 0 ? 'ミッションをクリアして情報を入手してください' : '別の買い取りカテゴリを選択してください' })] })) : (filteredIntel.map(item => (_jsx(IntelRow, { item: item, selected: selected.has(item.id), onToggle: () => toggleSelect(item.id) }, item.id))))) : tab === 'buy' ? (_jsxs("div", { style: { minHeight: 0, flex: '1 1 auto' }, children: [_jsxs("div", { style: {
+                            }, children: [_jsx("div", { style: { fontSize: 32, opacity: 0.2 }, children: "\u25CE" }), _jsx("div", { style: { fontSize: 10, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.2em' }, children: intel.length === 0 ? 'NO INTEL IN INVENTORY' : 'NO MATCHING INTEL' }), _jsx("div", { style: { fontSize: 8, color: 'rgba(255,255,255,0.12)', letterSpacing: '0.1em' }, children: intel.length === 0 ? 'ミッションをクリアして情報を入手してください' : '別の買い取りカテゴリを選択してください' })] })) : (filteredIntel.map(item => (_jsx(IntelRow, { item: item, selected: selected.has(item.id), onToggle: () => toggleSelect(item.id) }, item.id))))) : tab === 'buy' ? (_jsxs("div", { style: { minHeight: 0, height: '100%', flex: '1 1 auto', display: 'flex', flexDirection: 'column' }, children: [_jsxs("div", { style: {
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
@@ -506,10 +508,12 @@ export function ShopScreen() {
                                     }, children: [_jsx("div", { style: { fontSize: 24, opacity: 0.14 }, children: "\u25C7" }), _jsx("div", { style: { fontSize: 9, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.18em' }, children: filteredEquip.length === 0 ? 'NO EQUIPMENT MATCH' : 'ALL FILTERED GEAR INSTALLED' }), _jsx("div", { style: { fontSize: 7.5, color: 'rgba(255,255,255,0.12)', letterSpacing: '0.1em' }, children: filteredEquip.length === 0 ? '別の在庫カテゴリを選択してください' : '購入済み装備は INSTALLED タブに移動済み' })] })) : (_jsx("div", { style: {
                                         display: 'grid',
                                         gridTemplateColumns: '1fr 1fr',
-                                        gridAutoRows: '126px',
+                                        gridTemplateRows: `repeat(${availableRows}, minmax(0, 1fr))`,
                                         gap: 7,
                                         alignContent: 'start',
-                                    }, children: availableEquip.map(equip => (_jsx(EquipCard, { equip: equip, owned: false, canAfford: coins >= equip.price, balance: coins, onBuy: () => requestBuy(equip) }, equip.id))) }))] })) : (_jsxs("div", { style: { minHeight: 0, flex: '1 1 auto' }, children: [_jsxs("div", { style: {
+                                        minHeight: 0,
+                                        flex: '1 1 auto',
+                                    }, children: availableEquip.map(equip => (_jsx(EquipCard, { equip: equip, owned: false, canAfford: coins >= equip.price, balance: coins, onBuy: () => requestBuy(equip) }, equip.id))) }))] })) : (_jsxs("div", { style: { minHeight: 0, height: '100%', flex: '1 1 auto', display: 'flex', flexDirection: 'column' }, children: [_jsxs("div", { style: {
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
@@ -530,9 +534,11 @@ export function ShopScreen() {
                                     }, children: [_jsx("div", { style: { fontSize: 24, opacity: 0.14 }, children: "\u25C7" }), _jsx("div", { style: { fontSize: 9, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.18em' }, children: "NO INSTALLED GEAR" }), _jsx("div", { style: { fontSize: 7.5, color: 'rgba(255,255,255,0.12)', letterSpacing: '0.1em' }, children: "\u8CFC\u5165\u3057\u305F\u6C38\u4E45\u88C5\u5099\u304C\u3053\u3053\u306B\u8868\u793A\u3055\u308C\u307E\u3059" })] })) : (_jsx("div", { style: {
                                         display: 'grid',
                                         gridTemplateColumns: '1fr 1fr',
-                                        gridAutoRows: '62px',
+                                        gridTemplateRows: `repeat(${ownedRows}, minmax(0, 1fr))`,
                                         gap: 6,
                                         alignContent: 'start',
+                                        minHeight: 0,
+                                        flex: '1 1 auto',
                                     }, children: ownedEquip.map(equip => (_jsx(OwnedEquipTile, { equip: equip }, equip.id))) }))] })) }), tab === 'sell' && filteredIntel.length > 0 && (_jsxs("div", { style: {
                             padding: '12px 14px', flexShrink: 0,
                             borderTop: '1px solid rgba(255,255,255,0.05)',

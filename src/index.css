@@ -8,15 +8,61 @@
 
 html, body, #root {
   height: 100%;
+  min-height: 100%;
   margin: 0;
   padding: 0;
 }
 
 body {
+  overflow: hidden;
+  background: #000;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   touch-action: manipulation;
+}
+
+.app-viewport {
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 42% 60% at 50% 45%, rgba(77, 163, 255, 0.07), transparent 68%),
+    #000;
+}
+
+.app-frame {
+  position: relative;
+  width: min(100vw, 430px);
+  height: 100vh;
+  height: 100dvh;
+  max-height: 932px;
+  min-height: min(100dvh, 560px);
+  overflow: hidden;
+  background: #030509;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 60px rgba(77, 163, 255, 0.08);
+}
+
+@media (max-width: 480px) {
+  .app-frame {
+    width: 100vw;
+    max-height: none;
+    border-left: 0;
+    border-right: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-height: 620px) {
+  .app-frame {
+    max-height: 100dvh;
+  }
 }
 
 /* グリッチ風スキャンライン */

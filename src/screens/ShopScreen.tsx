@@ -677,6 +677,8 @@ export function ShopScreen() {
     .sort((a, b) => a.price - b.price);
   const availableEquip = filteredEquip.filter(equip => !knownPurchasedEquip.includes(equip.id));
   const ownedEquip = filteredEquip.filter(equip => knownPurchasedEquip.includes(equip.id));
+  const availableRows = Math.max(1, Math.ceil(availableEquip.length / 2));
+  const ownedRows = Math.max(1, Math.ceil(ownedEquip.length / 2));
   const marketSignal = tab === 'buy'
     ? `${EQUIPMENT_LIST.length - knownPurchasedEquip.length} PERMANENT UPGRADES AVAILABLE`
     : tab === 'installed'
@@ -925,7 +927,7 @@ export function ShopScreen() {
               ))
             )
           ) : tab === 'buy' ? (
-            <div style={{ minHeight: 0, flex: '1 1 auto' }}>
+            <div style={{ minHeight: 0, height: '100%', flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
               <div
                 style={{
                   display: 'flex',
@@ -966,9 +968,11 @@ export function ShopScreen() {
                   style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
-                    gridAutoRows: '126px',
+                    gridTemplateRows: `repeat(${availableRows}, minmax(0, 1fr))`,
                     gap: 7,
                     alignContent: 'start',
+                    minHeight: 0,
+                    flex: '1 1 auto',
                   }}
                 >
                   {availableEquip.map(equip => (
@@ -985,7 +989,7 @@ export function ShopScreen() {
               )}
             </div>
           ) : (
-            <div style={{ minHeight: 0, flex: '1 1 auto' }}>
+            <div style={{ minHeight: 0, height: '100%', flex: '1 1 auto', display: 'flex', flexDirection: 'column' }}>
               <div
                 style={{
                   display: 'flex',
@@ -1026,9 +1030,11 @@ export function ShopScreen() {
                   style={{
                     display: 'grid',
                     gridTemplateColumns: '1fr 1fr',
-                    gridAutoRows: '62px',
+                    gridTemplateRows: `repeat(${ownedRows}, minmax(0, 1fr))`,
                     gap: 6,
                     alignContent: 'start',
+                    minHeight: 0,
+                    flex: '1 1 auto',
                   }}
                 >
                   {ownedEquip.map(equip => (

@@ -16,15 +16,8 @@ export default function App() {
   const screen = useGameStore((s) => s.screen);
 
   return (
-    <div className="w-screen h-[100dvh] flex items-center justify-center bg-black">
-      {/* 750×1334 (2× retina) = 375×667 CSS px を基準に縦比固定 */}
-      <div
-        className="relative bg-bg-900 overflow-hidden shadow-[0_0_60px_rgba(77,163,255,0.08)] border border-white/[0.06]"
-        style={{
-          width:  'min(100vw, 375px, calc(100dvh * 375 / 667))',
-          height: 'min(100dvh, 667px, calc(100vw * 667 / 375))',
-        }}
-      >
+    <div className="app-viewport">
+      <div className="app-frame">
         {/* screen-enter: key でスクリーン変更のたびに再マウント → アニメ再実行 */}
         <div key={screen} className="w-full h-full screen-enter">
           {screen === 'title'        && <TitleScreen />}
