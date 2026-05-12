@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { STAGES, RISK_COLOR } from '../data/stages';
 import { useGameStore } from '../store/gameStore';
 import { MapSelectionPulseEffects } from '../components/MapSelectionPulse';
-import { getCachedTiltPermission, getDeviceTiltSupport, mapMotionToTilt, mapOrientationToTilt, requestDeviceTiltPermission, } from '../utils/deviceTilt';
+import { getDeviceTiltSupport, mapMotionToTilt, mapOrientationToTilt, } from '../utils/deviceTilt';
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 const HIDEOUT_EXIT_DELAY_MS = 560;
 const RANK_TABLE = [
@@ -241,72 +241,6 @@ function HideoutHologramDeck({ available, coins, intelCount, mouse, exiting = fa
                 willChange: 'transform',
             }, children: _jsxs("div", { style: { position: 'absolute', transformStyle: 'preserve-3d', animation: 'hideout-scene-drift 18s ease-in-out infinite' }, children: [_jsx(HideoutGlassPanel, { tx: 0, ty: -108, tz: -86, rx: 6, ry: -8, w: 282, h: 154, glow: 0.52, onClick: onOpenBoard, ariaLabel: "Open darknet board", pressed: pressedTarget === 'board', disabled: exiting, children: _jsx(HideoutBoardButtonPreview, { available: available }) }), _jsx(HideoutGlassPanel, { tx: 0, ty: 100, tz: -112, rx: 7, ry: 8, w: 282, h: 154, glow: 0.46, color: "#ff7800", onClick: onOpenMarket, ariaLabel: "Open black market", pressed: pressedTarget === 'market', disabled: exiting, children: _jsx(HideoutMarketButtonPreview, { coins: coins, intelCount: intelCount }) })] }) }) }));
 }
-function TiltDebugPanel({ debug, onEnable, onRecenter, }) {
-    const status = !debug.supported
-        ? 'NO SENSOR'
-        : debug.events > 0
-            ? 'DETECTING'
-            : debug.permission === 'denied'
-                ? 'DENIED'
-                : debug.permission === 'requested'
-                    ? 'REQUESTED'
-                    : 'WAITING';
-    const statusColor = status === 'DETECTING'
-        ? '#70ffba'
-        : status === 'DENIED' || status === 'NO SENSOR'
-            ? '#ff784f'
-            : '#4da3ff';
-    const format = (value, digits = 2) => (value === null ? '--' : value.toFixed(digits));
-    const enableLabel = debug.permission === 'denied'
-        ? 'RETRY'
-        : debug.permission === 'requested'
-            ? 'WAIT'
-            : 'ENABLE';
-    return (_jsxs("div", { style: {
-            position: 'absolute',
-            left: 13,
-            bottom: 34,
-            zIndex: 72,
-            width: 'min(312px, calc(100% - 26px))',
-            padding: '10px 11px 11px',
-            color: '#c8e7ff',
-            fontFamily: 'monospace',
-            background: 'linear-gradient(135deg, rgba(2,8,18,0.9), rgba(2,14,28,0.82))',
-            border: '1px solid rgba(77,163,255,0.46)',
-            boxShadow: `0 0 24px rgba(77,163,255,0.16), inset 0 0 18px rgba(77,163,255,0.08), 0 0 12px ${statusColor}22`,
-            backdropFilter: 'blur(9px)',
-            pointerEvents: 'auto',
-        }, children: [_jsxs("div", { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }, children: [_jsx("div", { style: { fontSize: 8, letterSpacing: '0.26em', color: 'rgba(77,163,255,0.88)' }, children: "// TILT_SENSOR DEBUG" }), _jsxs("div", { style: { display: 'flex', alignItems: 'center', gap: 5 }, children: [_jsx("span", { style: {
-                                    width: 6,
-                                    height: 6,
-                                    borderRadius: '50%',
-                                    background: statusColor,
-                                    boxShadow: `0 0 10px ${statusColor}`,
-                                } }), _jsx("span", { style: { fontSize: 8, letterSpacing: '0.18em', color: statusColor }, children: status })] })] }), _jsxs("div", { style: {
-                    marginTop: 9,
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                    gap: '6px 10px',
-                    fontSize: 8,
-                    letterSpacing: '0.11em',
-                }, children: [_jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "PERMISSION" }), _jsx("div", { style: { textAlign: 'right', color: '#ffffff' }, children: debug.permission.toUpperCase() }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "SOURCE" }), _jsx("div", { style: { textAlign: 'right', color: '#70ffba' }, children: debug.source.toUpperCase() }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "ORIENT / MOTION" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [debug.orientationSupported ? 'YES' : 'NO', " / ", debug.motionSupported ? 'YES' : 'NO'] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "EVENTS" }), _jsx("div", { style: { textAlign: 'right', color: '#ffffff' }, children: debug.events }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "BETA / GAMMA" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.beta, 1), " / ", format(debug.gamma, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "MOTION X/Y/Z" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.motionX, 1), " / ", format(debug.motionY, 1), " / ", format(debug.motionZ, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "DELTA" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.deltaBeta, 1), " / ", format(debug.deltaGamma, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "UI TILT X / Y" }), _jsxs("div", { style: { textAlign: 'right', color: '#70ffba' }, children: [format(debug.x), " / ", format(debug.y)] })] }), _jsxs("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginTop: 10 }, children: [_jsx("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: onEnable, style: {
-                            height: 26,
-                            border: '1px solid rgba(77,163,255,0.55)',
-                            background: 'rgba(77,163,255,0.16)',
-                            color: '#9fd0ff',
-                            fontSize: 8,
-                            letterSpacing: '0.18em',
-                            fontFamily: 'monospace',
-                        }, children: enableLabel }), _jsx("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: onRecenter, style: {
-                            height: 26,
-                            border: '1px solid rgba(255,120,0,0.55)',
-                            background: 'rgba(255,120,0,0.13)',
-                            color: '#ff9a36',
-                            fontSize: 8,
-                            letterSpacing: '0.18em',
-                            fontFamily: 'monospace',
-                        }, children: "ZERO" })] })] }));
-}
 // ─── Main HomeScreen ──────────────────────────────────────────────────────────
 export function HomeScreen() {
     const completedStages = useGameStore((s) => s.completedStages);
@@ -317,36 +251,12 @@ export function HomeScreen() {
     const [mouse, setMouse] = useState({ x: 0, y: 0 });
     const [entered, setEntered] = useState(false);
     const [exitingTo, setExitingTo] = useState(null);
-    const [tiltDebug, setTiltDebug] = useState(() => {
-        const support = getDeviceTiltSupport();
-        return {
-            supported: support.supported,
-            orientationSupported: support.orientationSupported,
-            motionSupported: support.motionSupported,
-            permission: getCachedTiltPermission(),
-            source: 'none',
-            events: 0,
-            beta: null,
-            gamma: null,
-            motionX: null,
-            motionY: null,
-            motionZ: null,
-            deltaBeta: 0,
-            deltaGamma: 0,
-            x: 0,
-            y: 0,
-            updatedAt: null,
-        };
-    });
     const containerRef = useRef(null);
     const exitTimerRef = useRef(0);
     const tiltBaselineRef = useRef(null);
     const motionBaselineRef = useRef(null);
     const tiltFrameRef = useRef(0);
     const pendingTiltRef = useRef({ x: 0, y: 0 });
-    const pendingTiltRawRef = useRef(null);
-    const tiltEventCountRef = useRef(0);
-    const tiltPermissionRef = useRef(getCachedTiltPermission());
     const rank = getRank(completedStages.length);
     const available = STAGES.filter(s => completedStages.length >= s.requiredCompleted).length;
     useEffect(() => {
@@ -356,54 +266,18 @@ export function HomeScreen() {
     useEffect(() => () => clearTimeout(exitTimerRef.current), []);
     useEffect(() => {
         const support = getDeviceTiltSupport();
-        if (!support.supported) {
-            setTiltDebug(prev => ({
-                ...prev,
-                supported: false,
-                orientationSupported: false,
-                motionSupported: false,
-            }));
+        if (!support.supported)
             return;
-        }
-        setTiltDebug(prev => ({
-            ...prev,
-            supported: true,
-            orientationSupported: support.orientationSupported,
-            motionSupported: support.motionSupported,
-            permission: tiltPermissionRef.current,
-        }));
-        const scheduleTiltUpdate = (nextTilt, raw) => {
+        const scheduleTiltUpdate = (nextTilt) => {
             pendingTiltRef.current = nextTilt;
-            pendingTiltRawRef.current = raw;
-            tiltEventCountRef.current += 1;
             if (tiltFrameRef.current)
                 return;
             tiltFrameRef.current = window.requestAnimationFrame(() => {
                 tiltFrameRef.current = 0;
                 const next = pendingTiltRef.current;
-                const reading = pendingTiltRawRef.current;
                 setMouse(prev => ({
                     x: prev.x + (next.x - prev.x) * 0.32,
                     y: prev.y + (next.y - prev.y) * 0.32,
-                }));
-                setTiltDebug(prev => ({
-                    ...prev,
-                    supported: true,
-                    orientationSupported: support.orientationSupported,
-                    motionSupported: support.motionSupported,
-                    permission: tiltPermissionRef.current,
-                    source: reading?.source ?? prev.source,
-                    events: tiltEventCountRef.current,
-                    beta: reading?.beta ?? prev.beta,
-                    gamma: reading?.gamma ?? prev.gamma,
-                    motionX: reading?.motionX ?? prev.motionX,
-                    motionY: reading?.motionY ?? prev.motionY,
-                    motionZ: reading?.motionZ ?? prev.motionZ,
-                    deltaBeta: reading?.deltaBeta ?? prev.deltaBeta,
-                    deltaGamma: reading?.deltaGamma ?? prev.deltaGamma,
-                    x: next.x,
-                    y: next.y,
-                    updatedAt: Date.now(),
                 }));
             });
         };
@@ -416,7 +290,7 @@ export function HomeScreen() {
                 tiltBaselineRef.current = { beta, gamma };
             }
             const mapped = mapOrientationToTilt(beta, gamma, tiltBaselineRef.current);
-            scheduleTiltUpdate(mapped.nextTilt, mapped.raw);
+            scheduleTiltUpdate(mapped.nextTilt);
         };
         const handleMotion = (event) => {
             const gravity = event.accelerationIncludingGravity;
@@ -431,7 +305,7 @@ export function HomeScreen() {
                 motionBaselineRef.current = { x: gx, y: gy, z: gz };
             }
             const mapped = mapMotionToTilt(gx, gy, gz, motionBaselineRef.current);
-            scheduleTiltUpdate(mapped.nextTilt, mapped.raw);
+            scheduleTiltUpdate(mapped.nextTilt);
         };
         if (support.orientationSupported) {
             window.addEventListener('deviceorientation', handleOrientation, { passive: true });
@@ -449,74 +323,6 @@ export function HomeScreen() {
             if (tiltFrameRef.current)
                 cancelAnimationFrame(tiltFrameRef.current);
         };
-    }, []);
-    const requestDeviceTilt = useCallback(async () => {
-        const support = getDeviceTiltSupport();
-        if (!support.supported) {
-            setTiltDebug(prev => ({
-                ...prev,
-                supported: false,
-                orientationSupported: false,
-                motionSupported: false,
-            }));
-            return;
-        }
-        if (tiltPermissionRef.current === 'requested') {
-            setTiltDebug(prev => ({
-                ...prev,
-                supported: true,
-                orientationSupported: support.orientationSupported,
-                motionSupported: support.motionSupported,
-                permission: tiltPermissionRef.current,
-            }));
-            return;
-        }
-        if (tiltPermissionRef.current === 'granted') {
-            setTiltDebug(prev => ({
-                ...prev,
-                supported: true,
-                orientationSupported: support.orientationSupported,
-                motionSupported: support.motionSupported,
-                permission: 'granted',
-            }));
-            return;
-        }
-        tiltPermissionRef.current = 'requested';
-        setTiltDebug(prev => ({
-            ...prev,
-            supported: true,
-            orientationSupported: support.orientationSupported,
-            motionSupported: support.motionSupported,
-            permission: 'requested',
-        }));
-        const result = await requestDeviceTiltPermission();
-        tiltPermissionRef.current = result;
-        if (result === 'granted') {
-            tiltBaselineRef.current = null;
-            motionBaselineRef.current = null;
-        }
-        setTiltDebug(prev => ({
-            ...prev,
-            supported: true,
-            orientationSupported: support.orientationSupported,
-            motionSupported: support.motionSupported,
-            permission: result,
-        }));
-    }, []);
-    const recenterDeviceTilt = useCallback(() => {
-        tiltBaselineRef.current = null;
-        motionBaselineRef.current = null;
-        pendingTiltRef.current = { x: 0, y: 0 };
-        setMouse({ x: 0, y: 0 });
-        setTiltDebug(prev => ({
-            ...prev,
-            source: 'none',
-            deltaBeta: 0,
-            deltaGamma: 0,
-            x: 0,
-            y: 0,
-            updatedAt: Date.now(),
-        }));
     }, []);
     const handleMouseMove = useCallback((e) => {
         const rect = containerRef.current?.getBoundingClientRect();
@@ -633,5 +439,5 @@ export function HomeScreen() {
                     background: 'linear-gradient(to top, rgba(0,0,0,0.7), transparent)',
                     borderTop: '1px solid rgba(255,255,255,0.03)',
                     display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                }, children: [_jsx("div", { style: { fontSize: 7, color: 'rgba(255,255,255,0.09)', letterSpacing: '0.3em', fontFamily: 'monospace' }, children: "v0.1.4 \u00B7 NULLIFIER" }), _jsxs("div", { style: { fontSize: 7, color: 'rgba(255,255,255,0.09)', letterSpacing: '0.2em', fontFamily: 'monospace' }, children: [available, " NODES ACTIVE"] })] }), _jsx(TiltDebugPanel, { debug: tiltDebug, onEnable: requestDeviceTilt, onRecenter: recenterDeviceTilt }), exitingTo && (_jsx("div", { className: "absolute inset-0 z-[80] pointer-events-none hideout-blackout", style: { background: '#000', opacity: 0 } }))] }));
+                }, children: [_jsx("div", { style: { fontSize: 7, color: 'rgba(255,255,255,0.09)', letterSpacing: '0.3em', fontFamily: 'monospace' }, children: "v0.1.4 \u00B7 NULLIFIER" }), _jsxs("div", { style: { fontSize: 7, color: 'rgba(255,255,255,0.09)', letterSpacing: '0.2em', fontFamily: 'monospace' }, children: [available, " NODES ACTIVE"] })] }), exitingTo && (_jsx("div", { className: "absolute inset-0 z-[80] pointer-events-none hideout-blackout", style: { background: '#000', opacity: 0 } }))] }));
 }

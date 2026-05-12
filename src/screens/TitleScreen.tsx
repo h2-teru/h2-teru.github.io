@@ -1,12 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CtaButton } from '../components/CtaButton';
-import {
-  getCachedTiltPermission,
-  getDeviceTiltSupport,
-  requestDeviceTiltPermission,
-  type TiltPermissionStatus,
-} from '../utils/deviceTilt';
+import { getCachedTiltPermission, requestDeviceTiltPermission } from '../utils/deviceTilt';
 
 const TITLE_EXIT_DELAY_MS = 820;
 
@@ -272,8 +267,6 @@ export function TitleScreen() {
   const startRun = useGameStore((s) => s.startRun);
   const [ready, setReady] = useState(false);
   const [exiting, setExiting] = useState(false);
-  const [tiltSupport] = useState(() => getDeviceTiltSupport());
-  const [tiltPermission, setTiltPermission] = useState<TiltPermissionStatus>(() => getCachedTiltPermission());
   const startTimerRef = useRef(0);
 
   useEffect(() => {
@@ -283,6 +276,16 @@ export function TitleScreen() {
 
   useEffect(() => () => clearTimeout(startTimerRef.current), []);
 
+  const requestTitleGyroPermission = useCallback(() => {
+    const permission = getCachedTiltPermission();
+    if (permission === 'granted' || permission === 'requested') return;
+    void requestDeviceTiltPermission();
+  }, []);
+
+  useEffect(() => {
+    requestTitleGyroPermission();
+  }, [requestTitleGyroPermission]);
+
   const handleStart = () => {
     if (exiting) return;
     setExiting(true);
@@ -290,30 +293,11 @@ export function TitleScreen() {
     startTimerRef.current = window.setTimeout(startRun, TITLE_EXIT_DELAY_MS);
   };
 
-  const handleGyroPermission = async () => {
-    if (exiting || tiltPermission === 'requested' || !tiltSupport.supported) return;
-    setTiltPermission('requested');
-    setTiltPermission(await requestDeviceTiltPermission());
-  };
-
-  const gyroLabel = !tiltSupport.supported
-    ? 'GYRO UNAVAILABLE'
-    : tiltPermission === 'granted'
-      ? 'GYRO ONLINE'
-      : tiltPermission === 'denied'
-        ? 'RETRY GYRO'
-        : tiltPermission === 'requested'
-          ? 'GYRO REQUESTING'
-          : 'ENABLE GYRO';
-  const gyroColor = tiltPermission === 'granted'
-    ? '#70ffba'
-    : tiltPermission === 'denied'
-      ? '#ff784f'
-      : '#4da3ff';
-
   return (
     <div
       className="relative w-full h-full font-mono overflow-hidden select-none"
+      onPointerDownCapture={requestTitleGyroPermission}
+      onTouchStartCapture={requestTitleGyroPermission}
       style={{ background: '#020812' }}
     >
       <style>{`
@@ -626,21 +610,6 @@ export function TitleScreen() {
             }}
           >
             &gt; START THE GAME
-          </CtaButton>
-          <CtaButton
-            onClick={handleGyroPermission}
-            variant="ghost"
-            disabled={exiting || tiltPermission === 'requested' || !tiltSupport.supported}
-            style={{
-              border: `1px solid ${gyroColor}55`,
-              color: gyroColor,
-              background: `linear-gradient(90deg, ${gyroColor}14, rgba(0,0,0,0.18))`,
-              boxShadow: tiltPermission === 'granted'
-                ? `0 0 24px ${gyroColor}2e, inset 0 0 14px ${gyroColor}12`
-                : `0 0 12px ${gyroColor}18`,
-            }}
-          >
-            &gt; {gyroLabel}
           </CtaButton>
           <CtaButton
             onClick={() => {}}
