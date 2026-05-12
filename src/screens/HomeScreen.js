@@ -6,11 +6,11 @@ import { MapSelectionPulseEffects } from '../components/MapSelectionPulse';
 import { getDeviceTiltSupport, mapMotionToTilt, mapOrientationToTilt, } from '../utils/deviceTilt';
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 const HIDEOUT_EXIT_DELAY_MS = 560;
-const HIDEOUT_TILT_ALPHA = 0.1;
-const HIDEOUT_TILT_DEADZONE = 0.035;
+const HIDEOUT_TILT_DEADZONE = 0.03;
 const HIDEOUT_TILT_LIMIT = 0.38;
-const HIDEOUT_ORIENTATION_BASELINE_SAMPLES = 10;
-const HIDEOUT_MOTION_BASELINE_SAMPLES = 14;
+const HIDEOUT_TILT_SETTLE_EPSILON = 0.012;
+const HIDEOUT_ORIENTATION_BASELINE_SAMPLES = 6;
+const HIDEOUT_MOTION_BASELINE_SAMPLES = 10;
 const RANK_TABLE = [
     { min: 0, label: 'UNKNOWN', color: 'rgba(200,200,220,0.45)' },
     { min: 1, label: 'OPERATIVE', color: '#4da3ff' },
@@ -24,6 +24,20 @@ const stabilizeHideoutTilt = (value) => {
     if (magnitude < HIDEOUT_TILT_DEADZONE)
         return 0;
     return Math.sign(clamped) * (magnitude - HIDEOUT_TILT_DEADZONE);
+};
+const smoothHideoutTilt = (prev, next) => {
+    const dx = next.x - prev.x;
+    const dy = next.y - prev.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance < HIDEOUT_TILT_SETTLE_EPSILON)
+        return prev;
+    const alpha = distance > 0.12 ? 0.42 : distance > 0.05 ? 0.3 : 0.18;
+    const x = prev.x + dx * alpha;
+    const y = prev.y + dy * alpha;
+    return {
+        x: Math.abs(x) < HIDEOUT_TILT_SETTLE_EPSILON ? 0 : x,
+        y: Math.abs(y) < HIDEOUT_TILT_SETTLE_EPSILON ? 0 : y,
+    };
 };
 // ─── Hideout 3D Holographic UI ───────────────────────────────────────────────
 const HIDEOUT_CODE_LINES = [
@@ -218,7 +232,6 @@ function HideoutBackgroundScene({ mouse }) {
                 transformStyle: 'preserve-3d',
                 transform: `translateX(${driftX}px) translateY(${driftY}px)`,
                 animation: 'hideout-bg-drift 19s ease-in-out infinite',
-                transition: 'transform 0.12s linear',
             }, children: [_jsx(HideoutGlassPanel, { tx: -178, ty: -88, tz: -65, rx: 6, ry: 40, w: 238, h: 318, glow: 0.28 }), _jsx(HideoutGlassPanel, { tx: 118, ty: -68, tz: -190, rx: 8, ry: -40, w: 218, h: 278, glow: 0.2 }), _jsx(HideoutGlassPanel, { tx: -238, ty: -58, tz: -215, rx: 10, ry: 58, w: 188, h: 255, glow: 0.16 }), _jsx(HideoutGlassPanel, { tx: 48, ty: -30, tz: -470, rx: 4, ry: 7, w: 208, h: 138, glow: 0.13 }), _jsx(HideoutGlassPanel, { tx: 208, ty: 88, tz: 45, rx: 15, ry: -30, w: 165, h: 118, glow: 0.22 }), _jsx(HideoutGlassPanel, { tx: -18, ty: -248, tz: -55, rx: 72, ry: 6, w: 320, h: 195, glow: 0.13 }), _jsx("div", { style: {
                         position: 'absolute',
                         width: 380,
@@ -249,7 +262,6 @@ function HideoutHologramDeck({ available, coins, intelCount, mouse, exiting = fa
                 top: '49%',
                 transformStyle: 'preserve-3d',
                 transform: `translateX(${driftX}px) translateY(${driftY}px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(1.04)`,
-                transition: 'transform 0.12s linear',
                 willChange: 'transform',
             }, children: _jsxs("div", { style: { position: 'absolute', transformStyle: 'preserve-3d', animation: 'hideout-scene-drift 18s ease-in-out infinite' }, children: [_jsx(HideoutGlassPanel, { tx: 0, ty: -108, tz: -86, rx: 6, ry: -8, w: 282, h: 154, glow: 0.52, onClick: onOpenBoard, ariaLabel: "Open darknet board", pressed: pressedTarget === 'board', disabled: exiting, children: _jsx(HideoutBoardButtonPreview, { available: available }) }), _jsx(HideoutGlassPanel, { tx: 0, ty: 100, tz: -112, rx: 7, ry: 8, w: 282, h: 154, glow: 0.46, color: "#ff7800", onClick: onOpenMarket, ariaLabel: "Open black market", pressed: pressedTarget === 'market', disabled: exiting, children: _jsx(HideoutMarketButtonPreview, { coins: coins, intelCount: intelCount }) })] }) }) }));
 }
@@ -291,10 +303,7 @@ export function HomeScreen() {
             tiltFrameRef.current = window.requestAnimationFrame(() => {
                 tiltFrameRef.current = 0;
                 const next = pendingTiltRef.current;
-                setMouse(prev => ({
-                    x: prev.x + (next.x - prev.x) * HIDEOUT_TILT_ALPHA,
-                    y: prev.y + (next.y - prev.y) * HIDEOUT_TILT_ALPHA,
-                }));
+                setMouse(prev => smoothHideoutTilt(prev, next));
             });
         };
         const handleOrientation = (event) => {
@@ -375,7 +384,6 @@ export function HomeScreen() {
     }, []);
     const px = (depth) => ({
         transform: `translate(${mouse.x * depth * -1}px, ${mouse.y * depth * -0.6}px)`,
-        transition: 'transform 0.12s linear',
     });
     function goToWithExit(key) {
         if (exitingTo)
@@ -441,7 +449,6 @@ export function HomeScreen() {
                             left: '50%', width: '68%', height: '48%', pointerEvents: 'none',
                             background: 'radial-gradient(ellipse at 50% 55%, rgba(77,163,255,0.09), rgba(77,163,255,0.025) 44%, transparent 76%)',
                             animation: 'sp-pulse 5s ease-in-out infinite',
-                            transition: 'transform 0.12s linear',
                         } }), _jsx(HideoutHologramDeck, { available: available, coins: coins, intelCount: intel.length, mouse: mouse, exiting: Boolean(exitingTo), pressedTarget: exitingTo === 'stage_select'
                             ? 'board'
                             : exitingTo === 'shop'

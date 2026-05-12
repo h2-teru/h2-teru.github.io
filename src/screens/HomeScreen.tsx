@@ -12,11 +12,11 @@ import {
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 
 const HIDEOUT_EXIT_DELAY_MS = 560;
-const HIDEOUT_TILT_ALPHA = 0.1;
-const HIDEOUT_TILT_DEADZONE = 0.035;
+const HIDEOUT_TILT_DEADZONE = 0.03;
 const HIDEOUT_TILT_LIMIT = 0.38;
-const HIDEOUT_ORIENTATION_BASELINE_SAMPLES = 10;
-const HIDEOUT_MOTION_BASELINE_SAMPLES = 14;
+const HIDEOUT_TILT_SETTLE_EPSILON = 0.012;
+const HIDEOUT_ORIENTATION_BASELINE_SAMPLES = 6;
+const HIDEOUT_MOTION_BASELINE_SAMPLES = 10;
 
 const RANK_TABLE = [
   { min: 0, label: 'UNKNOWN',   color: 'rgba(200,200,220,0.45)' },
@@ -32,6 +32,21 @@ const stabilizeHideoutTilt = (value: number) => {
   const magnitude = Math.abs(clamped);
   if (magnitude < HIDEOUT_TILT_DEADZONE) return 0;
   return Math.sign(clamped) * (magnitude - HIDEOUT_TILT_DEADZONE);
+};
+
+const smoothHideoutTilt = (prev: TiltVector, next: TiltVector): TiltVector => {
+  const dx = next.x - prev.x;
+  const dy = next.y - prev.y;
+  const distance = Math.hypot(dx, dy);
+  if (distance < HIDEOUT_TILT_SETTLE_EPSILON) return prev;
+
+  const alpha = distance > 0.12 ? 0.42 : distance > 0.05 ? 0.3 : 0.18;
+  const x = prev.x + dx * alpha;
+  const y = prev.y + dy * alpha;
+  return {
+    x: Math.abs(x) < HIDEOUT_TILT_SETTLE_EPSILON ? 0 : x,
+    y: Math.abs(y) < HIDEOUT_TILT_SETTLE_EPSILON ? 0 : y,
+  };
 };
 
 // ─── Hideout 3D Holographic UI ───────────────────────────────────────────────
@@ -515,7 +530,6 @@ function HideoutBackgroundScene({ mouse }: { mouse: { x: number; y: number } }) 
           transformStyle: 'preserve-3d',
           transform: `translateX(${driftX}px) translateY(${driftY}px)`,
           animation: 'hideout-bg-drift 19s ease-in-out infinite',
-          transition: 'transform 0.12s linear',
         }}
       >
         <HideoutGlassPanel tx={-178} ty={-88} tz={-65} rx={6} ry={40} w={238} h={318} glow={0.28} />
@@ -584,7 +598,6 @@ function HideoutHologramDeck({
           top: '49%',
           transformStyle: 'preserve-3d',
           transform: `translateX(${driftX}px) translateY(${driftY}px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(1.04)`,
-          transition: 'transform 0.12s linear',
           willChange: 'transform',
         }}
       >
@@ -673,10 +686,7 @@ export function HomeScreen() {
       tiltFrameRef.current = window.requestAnimationFrame(() => {
         tiltFrameRef.current = 0;
         const next = pendingTiltRef.current;
-        setMouse(prev => ({
-          x: prev.x + (next.x - prev.x) * HIDEOUT_TILT_ALPHA,
-          y: prev.y + (next.y - prev.y) * HIDEOUT_TILT_ALPHA,
-        }));
+        setMouse(prev => smoothHideoutTilt(prev, next));
       });
     };
 
@@ -760,7 +770,6 @@ export function HomeScreen() {
 
   const px = (depth: number): React.CSSProperties => ({
     transform: `translate(${mouse.x * depth * -1}px, ${mouse.y * depth * -0.6}px)`,
-    transition: 'transform 0.12s linear',
   });
 
   function goToWithExit(key: Screen) {
@@ -847,7 +856,6 @@ export function HomeScreen() {
           left: '50%', width: '68%', height: '48%', pointerEvents: 'none',
           background: 'radial-gradient(ellipse at 50% 55%, rgba(77,163,255,0.09), rgba(77,163,255,0.025) 44%, transparent 76%)',
           animation: 'sp-pulse 5s ease-in-out infinite',
-          transition: 'transform 0.12s linear',
         }} />
 
         <HideoutHologramDeck
