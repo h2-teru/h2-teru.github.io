@@ -257,6 +257,11 @@ function TiltDebugPanel({ debug, onEnable, onRecenter, }) {
             ? '#ff784f'
             : '#4da3ff';
     const format = (value, digits = 2) => (value === null ? '--' : value.toFixed(digits));
+    const enableLabel = debug.permission === 'denied'
+        ? 'RETRY'
+        : debug.permission === 'requested'
+            ? 'WAIT'
+            : 'ENABLE';
     return (_jsxs("div", { style: {
             position: 'absolute',
             left: 13,
@@ -284,10 +289,7 @@ function TiltDebugPanel({ debug, onEnable, onRecenter, }) {
                     gap: '6px 10px',
                     fontSize: 8,
                     letterSpacing: '0.11em',
-                }, children: [_jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "PERMISSION" }), _jsx("div", { style: { textAlign: 'right', color: '#ffffff' }, children: debug.permission.toUpperCase() }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "SOURCE" }), _jsx("div", { style: { textAlign: 'right', color: '#70ffba' }, children: debug.source.toUpperCase() }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "ORIENT / MOTION" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [debug.orientationSupported ? 'YES' : 'NO', " / ", debug.motionSupported ? 'YES' : 'NO'] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "EVENTS" }), _jsx("div", { style: { textAlign: 'right', color: '#ffffff' }, children: debug.events }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "BETA / GAMMA" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.beta, 1), " / ", format(debug.gamma, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "MOTION X/Y/Z" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.motionX, 1), " / ", format(debug.motionY, 1), " / ", format(debug.motionZ, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "DELTA" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.deltaBeta, 1), " / ", format(debug.deltaGamma, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "UI TILT X / Y" }), _jsxs("div", { style: { textAlign: 'right', color: '#70ffba' }, children: [format(debug.x), " / ", format(debug.y)] })] }), _jsxs("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginTop: 10 }, children: [_jsx("button", { type: "button", onPointerDown: (e) => {
-                            e.stopPropagation();
-                            onEnable();
-                        }, onClick: onEnable, style: {
+                }, children: [_jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "PERMISSION" }), _jsx("div", { style: { textAlign: 'right', color: '#ffffff' }, children: debug.permission.toUpperCase() }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "SOURCE" }), _jsx("div", { style: { textAlign: 'right', color: '#70ffba' }, children: debug.source.toUpperCase() }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "ORIENT / MOTION" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [debug.orientationSupported ? 'YES' : 'NO', " / ", debug.motionSupported ? 'YES' : 'NO'] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "EVENTS" }), _jsx("div", { style: { textAlign: 'right', color: '#ffffff' }, children: debug.events }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "BETA / GAMMA" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.beta, 1), " / ", format(debug.gamma, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "MOTION X/Y/Z" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.motionX, 1), " / ", format(debug.motionY, 1), " / ", format(debug.motionZ, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "DELTA" }), _jsxs("div", { style: { textAlign: 'right', color: '#ffffff' }, children: [format(debug.deltaBeta, 1), " / ", format(debug.deltaGamma, 1)] }), _jsx("div", { style: { color: 'rgba(255,255,255,0.36)' }, children: "UI TILT X / Y" }), _jsxs("div", { style: { textAlign: 'right', color: '#70ffba' }, children: [format(debug.x), " / ", format(debug.y)] })] }), _jsxs("div", { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginTop: 10 }, children: [_jsx("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: onEnable, style: {
                             height: 26,
                             border: '1px solid rgba(77,163,255,0.55)',
                             background: 'rgba(77,163,255,0.16)',
@@ -295,7 +297,7 @@ function TiltDebugPanel({ debug, onEnable, onRecenter, }) {
                             fontSize: 8,
                             letterSpacing: '0.18em',
                             fontFamily: 'monospace',
-                        }, children: "ENABLE" }), _jsx("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: onRecenter, style: {
+                        }, children: enableLabel }), _jsx("button", { type: "button", onPointerDown: (e) => e.stopPropagation(), onClick: onRecenter, style: {
                             height: 26,
                             border: '1px solid rgba(255,120,0,0.55)',
                             background: 'rgba(255,120,0,0.13)',
@@ -487,7 +489,7 @@ export function HomeScreen() {
             }));
             return;
         }
-        if (tiltPermissionRef.current !== 'unknown') {
+        if (tiltPermissionRef.current === 'requested') {
             setTiltDebug(prev => ({
                 ...prev,
                 supported: true,
@@ -497,30 +499,40 @@ export function HomeScreen() {
             }));
             return;
         }
-        const permissionRequests = [];
-        if (orientationSupported) {
-            const orientationEvent = window.DeviceOrientationEvent;
-            if (typeof orientationEvent.requestPermission === 'function') {
-                try {
-                    permissionRequests.push(orientationEvent.requestPermission());
-                }
-                catch {
-                    permissionRequests.push(Promise.resolve('denied'));
-                }
-            }
+        if (tiltPermissionRef.current === 'granted') {
+            setTiltDebug(prev => ({
+                ...prev,
+                supported: true,
+                orientationSupported,
+                motionSupported,
+                permission: 'granted',
+            }));
+            return;
         }
+        let permissionRequest = null;
         if (motionSupported) {
             const motionEvent = window.DeviceMotionEvent;
             if (typeof motionEvent.requestPermission === 'function') {
                 try {
-                    permissionRequests.push(motionEvent.requestPermission());
+                    permissionRequest = motionEvent.requestPermission();
                 }
                 catch {
-                    permissionRequests.push(Promise.resolve('denied'));
+                    permissionRequest = Promise.resolve('denied');
                 }
             }
         }
-        if (permissionRequests.length === 0) {
+        if (!permissionRequest && orientationSupported) {
+            const orientationEvent = window.DeviceOrientationEvent;
+            if (typeof orientationEvent.requestPermission === 'function') {
+                try {
+                    permissionRequest = orientationEvent.requestPermission();
+                }
+                catch {
+                    permissionRequest = Promise.resolve('denied');
+                }
+            }
+        }
+        if (!permissionRequest) {
             tiltPermissionRef.current = 'granted';
             setTiltDebug(prev => ({
                 ...prev,
@@ -539,11 +551,10 @@ export function HomeScreen() {
             motionSupported,
             permission: 'requested',
         }));
-        Promise.allSettled(permissionRequests)
-            .then(results => {
-            const granted = results.some(result => result.status === 'fulfilled' && result.value === 'granted');
-            tiltPermissionRef.current = granted ? 'granted' : 'denied';
-            if (granted) {
+        permissionRequest
+            .then(result => {
+            tiltPermissionRef.current = result === 'granted' ? 'granted' : 'denied';
+            if (result === 'granted') {
                 tiltBaselineRef.current = null;
                 motionBaselineRef.current = null;
             }
@@ -601,7 +612,7 @@ export function HomeScreen() {
         clearTimeout(exitTimerRef.current);
         exitTimerRef.current = window.setTimeout(() => set({ screen: key }), HIDEOUT_EXIT_DELAY_MS);
     }
-    return (_jsxs("div", { ref: containerRef, onPointerDown: requestDeviceTilt, onTouchStart: requestDeviceTilt, onMouseMove: handleMouseMove, className: "relative w-full h-full overflow-hidden select-none font-mono", style: { background: '#020812' }, children: [_jsx("style", { children: `
+    return (_jsxs("div", { ref: containerRef, onMouseMove: handleMouseMove, className: "relative w-full h-full overflow-hidden select-none font-mono", style: { background: '#020812' }, children: [_jsx("style", { children: `
         @keyframes sp-flicker { 0%,100%{opacity:1} 91%{opacity:.82} 93%{opacity:.1} 95%{opacity:1} 97%{opacity:.65} }
         @keyframes sp-room-in { from{opacity:0;filter:blur(6px) brightness(0.15)} to{opacity:1;filter:blur(0) brightness(1)} }
         @keyframes sp-hud-in  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }

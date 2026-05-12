@@ -677,6 +677,11 @@ function TiltDebugPanel({
       ? '#ff784f'
       : '#4da3ff';
   const format = (value: number | null, digits = 2) => (value === null ? '--' : value.toFixed(digits));
+  const enableLabel = debug.permission === 'denied'
+    ? 'RETRY'
+    : debug.permission === 'requested'
+      ? 'WAIT'
+      : 'ENABLE';
 
   return (
     <div
@@ -755,10 +760,7 @@ function TiltDebugPanel({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginTop: 10 }}>
         <button
           type="button"
-          onPointerDown={(e) => {
-            e.stopPropagation();
-            onEnable();
-          }}
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={onEnable}
           style={{
             height: 26,
@@ -770,7 +772,7 @@ function TiltDebugPanel({
             fontFamily: 'monospace',
           }}
         >
-          ENABLE
+          {enableLabel}
         </button>
         <button
           type="button"
@@ -990,7 +992,7 @@ export function HomeScreen() {
       }));
       return;
     }
-    if (tiltPermissionRef.current !== 'unknown') {
+    if (tiltPermissionRef.current === 'requested') {
       setTiltDebug(prev => ({
         ...prev,
         supported: true,
@@ -1000,30 +1002,40 @@ export function HomeScreen() {
       }));
       return;
     }
-
-    const permissionRequests: Promise<PermissionState>[] = [];
-    if (orientationSupported) {
-      const orientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventConstructorWithPermission;
-      if (typeof orientationEvent.requestPermission === 'function') {
-        try {
-          permissionRequests.push(orientationEvent.requestPermission());
-        } catch {
-          permissionRequests.push(Promise.resolve('denied'));
-        }
-      }
+    if (tiltPermissionRef.current === 'granted') {
+      setTiltDebug(prev => ({
+        ...prev,
+        supported: true,
+        orientationSupported,
+        motionSupported,
+        permission: 'granted',
+      }));
+      return;
     }
+
+    let permissionRequest: Promise<PermissionState> | null = null;
     if (motionSupported) {
       const motionEvent = window.DeviceMotionEvent as DeviceMotionEventConstructorWithPermission;
       if (typeof motionEvent.requestPermission === 'function') {
         try {
-          permissionRequests.push(motionEvent.requestPermission());
+          permissionRequest = motionEvent.requestPermission();
         } catch {
-          permissionRequests.push(Promise.resolve('denied'));
+          permissionRequest = Promise.resolve('denied');
+        }
+      }
+    }
+    if (!permissionRequest && orientationSupported) {
+      const orientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventConstructorWithPermission;
+      if (typeof orientationEvent.requestPermission === 'function') {
+        try {
+          permissionRequest = orientationEvent.requestPermission();
+        } catch {
+          permissionRequest = Promise.resolve('denied');
         }
       }
     }
 
-    if (permissionRequests.length === 0) {
+    if (!permissionRequest) {
       tiltPermissionRef.current = 'granted';
       setTiltDebug(prev => ({
         ...prev,
@@ -1043,11 +1055,10 @@ export function HomeScreen() {
       motionSupported,
       permission: 'requested',
     }));
-    Promise.allSettled(permissionRequests)
-      .then(results => {
-        const granted = results.some(result => result.status === 'fulfilled' && result.value === 'granted');
-        tiltPermissionRef.current = granted ? 'granted' : 'denied';
-        if (granted) {
+    permissionRequest
+      .then(result => {
+        tiltPermissionRef.current = result === 'granted' ? 'granted' : 'denied';
+        if (result === 'granted') {
           tiltBaselineRef.current = null;
           motionBaselineRef.current = null;
         }
@@ -1111,8 +1122,6 @@ export function HomeScreen() {
   return (
     <div
       ref={containerRef}
-      onPointerDown={requestDeviceTilt}
-      onTouchStart={requestDeviceTilt}
       onMouseMove={handleMouseMove}
       className="relative w-full h-full overflow-hidden select-none font-mono"
       style={{ background: '#020812' }}
