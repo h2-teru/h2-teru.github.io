@@ -392,25 +392,12 @@ function HideoutMarketButtonPreview({
             <stop offset="48%" stopColor={marketColor} stopOpacity="0.82" />
             <stop offset="100%" stopColor={marketColor} stopOpacity="0" />
           </linearGradient>
-          <linearGradient id="hideout-market-terminal" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={marketColor} stopOpacity="0.18" />
-            <stop offset="52%" stopColor="rgba(4,9,18,0.88)" stopOpacity="1" />
-            <stop offset="100%" stopColor={signalColor} stopOpacity="0.1" />
-          </linearGradient>
         </defs>
         <rect x="22" y="38" width="238" height="76" fill="url(#hideout-market-shop-core)" opacity="0.9" />
-        <path
-          d="M42 43 H240 L254 57 V103 H30 V55 Z"
-          fill="url(#hideout-market-terminal)"
-          stroke={marketColor}
-          strokeWidth="1.1"
-          strokeOpacity="0.48"
-          strokeLinejoin="round"
-        />
-        <path d="M42 43 H240 L254 57" fill="none" stroke={marketColor} strokeWidth="1.2" strokeOpacity="0.82" />
-        <path d="M31 103 H254" stroke="url(#hideout-market-panel-line)" strokeWidth="1.3" />
+        <path d="M48 47 H234" stroke="url(#hideout-market-panel-line)" strokeWidth="1" strokeOpacity="0.58" />
+        <path d="M48 106 H234" stroke="url(#hideout-market-panel-line)" strokeWidth="1" strokeOpacity="0.46" />
 
-        <g transform="translate(43 53)">
+        <g transform="translate(49 49)">
           <text x="0" y="0" fontSize="5.8" letterSpacing="1" fill="rgba(255,255,255,0.28)" fontFamily="monospace">
             SELECT_STOCK
           </text>
