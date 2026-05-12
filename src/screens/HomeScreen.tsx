@@ -330,6 +330,7 @@ function HideoutMarketButtonPreview({
   const marketColor = '#ff7800';
   const signalColor = '#4da3ff';
   const creditLevel = Math.min(5, Math.max(1, Math.ceil(coins / 600)));
+  const fileLevel = Math.min(4, Math.max(1, intelCount || 1));
 
   return (
     <>
@@ -383,53 +384,81 @@ function HideoutMarketButtonPreview({
             <stop offset="48%" stopColor={marketColor} stopOpacity="0.82" />
             <stop offset="100%" stopColor={marketColor} stopOpacity="0" />
           </linearGradient>
+          <linearGradient id="hideout-market-terminal" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor={marketColor} stopOpacity="0.18" />
+            <stop offset="52%" stopColor="rgba(4,9,18,0.88)" stopOpacity="1" />
+            <stop offset="100%" stopColor={signalColor} stopOpacity="0.1" />
+          </linearGradient>
         </defs>
-        <rect x="22" y="37" width="238" height="76" fill="url(#hideout-market-shop-core)" opacity="0.95" />
-        <line x1="38" y1="77" x2="244" y2="77" stroke="url(#hideout-market-panel-line)" strokeWidth="1.2" />
-        <line x1="64" y1="99" x2="218" y2="99" stroke="rgba(255,120,0,0.28)" strokeWidth="0.8" />
+        <rect x="22" y="38" width="238" height="76" fill="url(#hideout-market-shop-core)" opacity="0.9" />
+        <path
+          d="M42 43 H240 L254 57 V103 H30 V55 Z"
+          fill="url(#hideout-market-terminal)"
+          stroke={marketColor}
+          strokeWidth="1.1"
+          strokeOpacity="0.48"
+          strokeLinejoin="round"
+        />
+        <path d="M42 43 H240 L254 57" fill="none" stroke={marketColor} strokeWidth="1.2" strokeOpacity="0.82" />
+        <path d="M31 103 H254" stroke="url(#hideout-market-panel-line)" strokeWidth="1.3" />
 
-        <g transform="translate(83 43)">
-          <path
-            d="M18 16 H98 L107 29 H9 Z"
-            fill="rgba(255,120,0,0.1)"
-            stroke={marketColor}
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-            strokeOpacity="0.82"
-          />
-          <path
-            d="M18 29 H98 V70 H18 Z"
-            fill="rgba(4,9,18,0.82)"
-            stroke={marketColor}
-            strokeWidth="1"
-            strokeOpacity="0.5"
-          />
-          <path d="M29 29 V16 M45 29 V16 M61 29 V16 M77 29 V16 M93 29 V16" stroke={marketColor} strokeWidth="0.8" strokeOpacity="0.38" />
-          <rect x="35" y="43" width="46" height="12" fill="rgba(255,120,0,0.14)" stroke={marketColor} strokeWidth="0.9" strokeOpacity="0.7" />
-          <text x="58" y="51.4" textAnchor="middle" fontSize="7" letterSpacing="1.2" fill={marketColor} fontFamily="monospace">GEAR</text>
-          <circle cx="58" cy="29" r="17" fill="rgba(255,120,0,0.08)" stroke={marketColor} strokeWidth="1.1" strokeOpacity="0.48" />
-          <path d="M50 28 H66 M58 20 V36" stroke={marketColor} strokeWidth="1.6" strokeLinecap="square" />
-        </g>
-
-        <g transform="translate(46 86)">
+        <g transform="translate(54 55)" opacity="0.78">
           {[0, 1, 2, 3, 4].map((i) => (
             <rect
               key={i}
               x={i * 10}
-              y={0}
+              y={37 - (i < creditLevel ? 18 : 9)}
               width="6"
-              height={i < creditLevel ? 14 : 7}
+              height={i < creditLevel ? 18 : 9}
               fill={i < creditLevel ? marketColor : 'rgba(255,255,255,0.12)'}
-              opacity={i < creditLevel ? 0.74 : 0.28}
+              opacity={i < creditLevel ? 0.78 : 0.28}
             />
           ))}
+          <line x1="0" y1="38" x2="46" y2="38" stroke="rgba(255,255,255,0.18)" strokeWidth="0.7" />
         </g>
 
-        <g transform="translate(198 86)">
-          <rect x="0" y="0" width="14" height="14" fill="rgba(77,163,255,0.12)" stroke={signalColor} strokeWidth="0.8" strokeOpacity="0.55" />
-          <rect x="20" y="0" width="14" height="14" fill="rgba(255,120,0,0.12)" stroke={marketColor} strokeWidth="0.8" strokeOpacity="0.62" />
-          <path d="M15 7 H19" stroke="rgba(255,255,255,0.28)" strokeWidth="0.8" />
+        <g transform="translate(104 52)">
+          <path
+            d="M6 10 H73 L83 20 V56 H6 Z"
+            fill="rgba(2,7,15,0.92)"
+            stroke={marketColor}
+            strokeWidth="1.2"
+            strokeLinejoin="round"
+            strokeOpacity="0.76"
+          />
+          <path
+            d="M20 21 H68 V45 H20 Z"
+            fill="rgba(255,120,0,0.08)"
+            stroke={marketColor}
+            strokeWidth="0.9"
+            strokeOpacity="0.58"
+          />
+          <path d="M20 21 L68 45 M68 21 L20 45" stroke={marketColor} strokeWidth="0.55" strokeOpacity="0.34" />
+          <path d="M36 16 H58 M36 50 H58" stroke={signalColor} strokeWidth="0.9" strokeOpacity="0.55" />
+          <path d="M42 27 H56 L61 33 L56 39 H42 L37 33 Z" fill="rgba(255,120,0,0.22)" stroke={marketColor} strokeWidth="1" strokeOpacity="0.9" />
+          <path d="M45 33 H58" stroke="rgba(255,255,255,0.58)" strokeWidth="0.8" />
+          <text x="44" y="9" textAnchor="middle" fontSize="5.8" letterSpacing="1" fill="rgba(255,255,255,0.28)" fontFamily="monospace">VENDOR_NODE</text>
         </g>
+
+        <g transform="translate(205 58)">
+          <path d="M0 2 H31 L39 10 V38 H0 Z" fill="rgba(2,7,15,0.74)" stroke={signalColor} strokeWidth="0.8" strokeOpacity="0.38" />
+          {[0, 1, 2, 3].map((i) => (
+            <rect
+              key={i}
+              x={7 + i * 7}
+              y={12}
+              width="4"
+              height="14"
+              fill={i < fileLevel ? signalColor : 'rgba(255,255,255,0.12)'}
+              opacity={i < fileLevel ? 0.62 : 0.22}
+            />
+          ))}
+          <path d="M8 32 H30" stroke={marketColor} strokeWidth="0.8" strokeOpacity="0.5" />
+        </g>
+
+        <text x="141" y="116" textAnchor="middle" fontSize="6.2" letterSpacing="1.1" fill="rgba(255,120,0,0.42)" fontFamily="monospace">
+          PERMANENT EQUIPMENT
+        </text>
       </svg>
       <div
         style={{
