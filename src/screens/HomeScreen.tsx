@@ -331,6 +331,14 @@ function HideoutMarketButtonPreview({
   const signalColor = '#4da3ff';
   const creditLevel = Math.min(5, Math.max(1, Math.ceil(coins / 600)));
   const fileLevel = Math.min(4, Math.max(1, intelCount || 1));
+  const optionSlots = [
+    { label: 'HEAT', price: '450', color: marketColor },
+    { label: 'ROUTE', price: '900', color: signalColor },
+    { label: 'CACHE', price: '980', color: '#b44fff' },
+    { label: 'COLD', price: '560', color: '#9bff5d' },
+    { label: 'WALL', price: '760', color: marketColor },
+    { label: 'TORQ', price: '520', color: signalColor },
+  ];
 
   return (
     <>
@@ -402,58 +410,47 @@ function HideoutMarketButtonPreview({
         <path d="M42 43 H240 L254 57" fill="none" stroke={marketColor} strokeWidth="1.2" strokeOpacity="0.82" />
         <path d="M31 103 H254" stroke="url(#hideout-market-panel-line)" strokeWidth="1.3" />
 
-        <g transform="translate(54 55)" opacity="0.78">
-          {[0, 1, 2, 3, 4].map((i) => (
-            <rect
-              key={i}
-              x={i * 10}
-              y={37 - (i < creditLevel ? 18 : 9)}
-              width="6"
-              height={i < creditLevel ? 18 : 9}
-              fill={i < creditLevel ? marketColor : 'rgba(255,255,255,0.12)'}
-              opacity={i < creditLevel ? 0.78 : 0.28}
-            />
-          ))}
-          <line x1="0" y1="38" x2="46" y2="38" stroke="rgba(255,255,255,0.18)" strokeWidth="0.7" />
-        </g>
-
-        <g transform="translate(104 52)">
-          <path
-            d="M6 10 H73 L83 20 V56 H6 Z"
-            fill="rgba(2,7,15,0.92)"
-            stroke={marketColor}
-            strokeWidth="1.2"
-            strokeLinejoin="round"
-            strokeOpacity="0.76"
-          />
-          <path
-            d="M20 21 H68 V45 H20 Z"
-            fill="rgba(255,120,0,0.08)"
-            stroke={marketColor}
-            strokeWidth="0.9"
-            strokeOpacity="0.58"
-          />
-          <path d="M20 21 L68 45 M68 21 L20 45" stroke={marketColor} strokeWidth="0.55" strokeOpacity="0.34" />
-          <path d="M36 16 H58 M36 50 H58" stroke={signalColor} strokeWidth="0.9" strokeOpacity="0.55" />
-          <path d="M42 27 H56 L61 33 L56 39 H42 L37 33 Z" fill="rgba(255,120,0,0.22)" stroke={marketColor} strokeWidth="1" strokeOpacity="0.9" />
-          <path d="M45 33 H58" stroke="rgba(255,255,255,0.58)" strokeWidth="0.8" />
-          <text x="44" y="9" textAnchor="middle" fontSize="5.8" letterSpacing="1" fill="rgba(255,255,255,0.28)" fontFamily="monospace">VENDOR_NODE</text>
-        </g>
-
-        <g transform="translate(205 58)">
-          <path d="M0 2 H31 L39 10 V38 H0 Z" fill="rgba(2,7,15,0.74)" stroke={signalColor} strokeWidth="0.8" strokeOpacity="0.38" />
-          {[0, 1, 2, 3].map((i) => (
-            <rect
-              key={i}
-              x={7 + i * 7}
-              y={12}
-              width="4"
-              height="14"
-              fill={i < fileLevel ? signalColor : 'rgba(255,255,255,0.12)'}
-              opacity={i < fileLevel ? 0.62 : 0.22}
-            />
-          ))}
-          <path d="M8 32 H30" stroke={marketColor} strokeWidth="0.8" strokeOpacity="0.5" />
+        <g transform="translate(43 53)">
+          <text x="0" y="0" fontSize="5.8" letterSpacing="1" fill="rgba(255,255,255,0.28)" fontFamily="monospace">
+            SELECT_STOCK
+          </text>
+          <text x="185" y="0" textAnchor="end" fontSize="5.8" letterSpacing="0.9" fill="rgba(255,120,0,0.46)" fontFamily="monospace">
+            6 OPTIONS
+          </text>
+          {optionSlots.map((item, i) => {
+            const x = (i % 2) * 96;
+            const y = 9 + Math.floor(i / 2) * 15;
+            const listed = i < Math.min(6, creditLevel + fileLevel);
+            const selected = i === 1;
+            return (
+              <g key={item.label} transform={`translate(${x} ${y})`}>
+                <path
+                  d="M0 0 H78 L86 7 V13 H0 Z"
+                  fill={selected ? `${item.color}24` : 'rgba(2,7,15,0.76)'}
+                  stroke={String(item.color)}
+                  strokeWidth={selected ? 1 : 0.72}
+                  strokeOpacity={listed ? (selected ? 0.88 : 0.52) : 0.2}
+                />
+                <rect
+                  x="5"
+                  y="4"
+                  width="6"
+                  height="5"
+                  fill={String(item.color)}
+                  opacity={listed ? 0.78 : 0.24}
+                />
+                <text x="16" y="8.8" fontSize="6" letterSpacing="0.62" fill={listed ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.24)'} fontFamily="monospace">
+                  {item.label}
+                </text>
+                <text x="70" y="8.8" textAnchor="end" fontSize="5.6" letterSpacing="0.45" fill={listed ? String(item.color) : 'rgba(255,255,255,0.2)'} fontFamily="monospace">
+                  {item.price}
+                </text>
+                {selected && (
+                  <path d="M80 4 L86 7 L80 10" fill="none" stroke={marketColor} strokeWidth="0.9" strokeOpacity="0.95" />
+                )}
+              </g>
+            );
+          })}
         </g>
 
         <text x="141" y="116" textAnchor="middle" fontSize="6.2" letterSpacing="1.1" fill="rgba(255,120,0,0.42)" fontFamily="monospace">
