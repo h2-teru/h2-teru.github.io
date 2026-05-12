@@ -12,6 +12,28 @@ type DeviceOrientationEventConstructorWithPermission = typeof DeviceOrientationE
   requestPermission?: () => Promise<PermissionState>;
 };
 
+type TiltPermissionStatus = 'unknown' | 'requested' | 'granted' | 'denied';
+
+type TiltDebugState = {
+  supported: boolean;
+  permission: TiltPermissionStatus;
+  events: number;
+  beta: number | null;
+  gamma: number | null;
+  deltaBeta: number;
+  deltaGamma: number;
+  x: number;
+  y: number;
+  updatedAt: number | null;
+};
+
+type TiltRawReading = {
+  beta: number;
+  gamma: number;
+  deltaBeta: number;
+  deltaGamma: number;
+};
+
 const RANK_TABLE = [
   { min: 0, label: 'UNKNOWN',   color: 'rgba(200,200,220,0.45)' },
   { min: 1, label: 'OPERATIVE', color: '#4da3ff' },
@@ -616,6 +638,133 @@ function HideoutHologramDeck({
   );
 }
 
+function TiltDebugPanel({
+  debug,
+  onEnable,
+  onRecenter,
+}: {
+  debug: TiltDebugState;
+  onEnable: () => void;
+  onRecenter: () => void;
+}) {
+  const status = !debug.supported
+    ? 'NO SENSOR'
+    : debug.events > 0
+      ? 'DETECTING'
+      : debug.permission === 'denied'
+        ? 'DENIED'
+        : debug.permission === 'requested'
+          ? 'REQUESTED'
+          : 'WAITING';
+  const statusColor = status === 'DETECTING'
+    ? '#70ffba'
+    : status === 'DENIED' || status === 'NO SENSOR'
+      ? '#ff784f'
+      : '#4da3ff';
+  const format = (value: number | null, digits = 2) => (value === null ? '--' : value.toFixed(digits));
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        left: 13,
+        bottom: 34,
+        zIndex: 72,
+        width: 'min(312px, calc(100% - 26px))',
+        padding: '10px 11px 11px',
+        color: '#c8e7ff',
+        fontFamily: 'monospace',
+        background: 'linear-gradient(135deg, rgba(2,8,18,0.9), rgba(2,14,28,0.82))',
+        border: '1px solid rgba(77,163,255,0.46)',
+        boxShadow: `0 0 24px rgba(77,163,255,0.16), inset 0 0 18px rgba(77,163,255,0.08), 0 0 12px ${statusColor}22`,
+        backdropFilter: 'blur(9px)',
+        pointerEvents: 'auto',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ fontSize: 8, letterSpacing: '0.26em', color: 'rgba(77,163,255,0.88)' }}>
+          // TILT_SENSOR DEBUG
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <span
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: '50%',
+              background: statusColor,
+              boxShadow: `0 0 10px ${statusColor}`,
+            }}
+          />
+          <span style={{ fontSize: 8, letterSpacing: '0.18em', color: statusColor }}>{status}</span>
+        </div>
+      </div>
+
+      <div
+        style={{
+          marginTop: 9,
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gap: '6px 10px',
+          fontSize: 8,
+          letterSpacing: '0.11em',
+        }}
+      >
+        <div style={{ color: 'rgba(255,255,255,0.36)' }}>PERMISSION</div>
+        <div style={{ textAlign: 'right', color: '#ffffff' }}>{debug.permission.toUpperCase()}</div>
+        <div style={{ color: 'rgba(255,255,255,0.36)' }}>EVENTS</div>
+        <div style={{ textAlign: 'right', color: '#ffffff' }}>{debug.events}</div>
+        <div style={{ color: 'rgba(255,255,255,0.36)' }}>BETA / GAMMA</div>
+        <div style={{ textAlign: 'right', color: '#ffffff' }}>
+          {format(debug.beta, 1)} / {format(debug.gamma, 1)}
+        </div>
+        <div style={{ color: 'rgba(255,255,255,0.36)' }}>DELTA</div>
+        <div style={{ textAlign: 'right', color: '#ffffff' }}>
+          {format(debug.deltaBeta, 1)} / {format(debug.deltaGamma, 1)}
+        </div>
+        <div style={{ color: 'rgba(255,255,255,0.36)' }}>UI TILT X / Y</div>
+        <div style={{ textAlign: 'right', color: '#70ffba' }}>
+          {format(debug.x)} / {format(debug.y)}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginTop: 10 }}>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onEnable}
+          style={{
+            height: 26,
+            border: '1px solid rgba(77,163,255,0.55)',
+            background: 'rgba(77,163,255,0.16)',
+            color: '#9fd0ff',
+            fontSize: 8,
+            letterSpacing: '0.18em',
+            fontFamily: 'monospace',
+          }}
+        >
+          ENABLE
+        </button>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onRecenter}
+          style={{
+            height: 26,
+            border: '1px solid rgba(255,120,0,0.55)',
+            background: 'rgba(255,120,0,0.13)',
+            color: '#ff9a36',
+            fontSize: 8,
+            letterSpacing: '0.18em',
+            fontFamily: 'monospace',
+          }}
+        >
+          ZERO
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main HomeScreen ──────────────────────────────────────────────────────────
 
 export function HomeScreen() {
@@ -628,12 +777,26 @@ export function HomeScreen() {
   const [mouse,   setMouse]   = useState({ x: 0, y: 0 });
   const [entered, setEntered] = useState(false);
   const [exitingTo, setExitingTo] = useState<Screen | null>(null);
+  const [tiltDebug, setTiltDebug] = useState<TiltDebugState>(() => ({
+    supported: typeof window !== 'undefined' && 'DeviceOrientationEvent' in window,
+    permission: 'unknown',
+    events: 0,
+    beta: null,
+    gamma: null,
+    deltaBeta: 0,
+    deltaGamma: 0,
+    x: 0,
+    y: 0,
+    updatedAt: null,
+  }));
   const containerRef          = useRef<HTMLDivElement>(null);
   const exitTimerRef          = useRef(0);
   const tiltBaselineRef       = useRef<{ beta: number; gamma: number } | null>(null);
   const tiltFrameRef          = useRef(0);
   const pendingTiltRef        = useRef({ x: 0, y: 0 });
-  const tiltPermissionRef     = useRef<'unknown' | 'requested' | 'granted' | 'denied'>('unknown');
+  const pendingTiltRawRef     = useRef<TiltRawReading | null>(null);
+  const tiltEventCountRef     = useRef(0);
+  const tiltPermissionRef     = useRef<TiltPermissionStatus>('unknown');
 
   const rank      = getRank(completedStages.length);
   const available = STAGES.filter(s => completedStages.length >= s.requiredCompleted).length;
@@ -646,7 +809,12 @@ export function HomeScreen() {
   useEffect(() => () => clearTimeout(exitTimerRef.current), []);
 
   useEffect(() => {
-    if (!('DeviceOrientationEvent' in window)) return;
+    if (!('DeviceOrientationEvent' in window)) {
+      setTiltDebug(prev => ({ ...prev, supported: false }));
+      return;
+    }
+
+    setTiltDebug(prev => ({ ...prev, supported: true }));
 
     const handleOrientation = (event: DeviceOrientationEvent) => {
       if (typeof event.beta !== 'number' || typeof event.gamma !== 'number') return;
@@ -658,18 +826,37 @@ export function HomeScreen() {
       }
 
       const base = tiltBaselineRef.current;
-      pendingTiltRef.current = {
-        x: clampTilt((gamma - base.gamma) / 18),
-        y: clampTilt((beta - base.beta) / 24),
+      const deltaBeta = beta - base.beta;
+      const deltaGamma = gamma - base.gamma;
+      const nextTilt = {
+        x: clampTilt(deltaGamma / 18),
+        y: clampTilt(deltaBeta / 24),
       };
+      pendingTiltRef.current = nextTilt;
+      pendingTiltRawRef.current = { beta, gamma, deltaBeta, deltaGamma };
+      tiltEventCountRef.current += 1;
 
       if (tiltFrameRef.current) return;
       tiltFrameRef.current = window.requestAnimationFrame(() => {
         tiltFrameRef.current = 0;
         const next = pendingTiltRef.current;
+        const raw = pendingTiltRawRef.current;
         setMouse(prev => ({
           x: prev.x + (next.x - prev.x) * 0.32,
           y: prev.y + (next.y - prev.y) * 0.32,
+        }));
+        setTiltDebug(prev => ({
+          ...prev,
+          supported: true,
+          permission: tiltPermissionRef.current,
+          events: tiltEventCountRef.current,
+          beta: raw?.beta ?? prev.beta,
+          gamma: raw?.gamma ?? prev.gamma,
+          deltaBeta: raw?.deltaBeta ?? prev.deltaBeta,
+          deltaGamma: raw?.deltaGamma ?? prev.deltaGamma,
+          x: next.x,
+          y: next.y,
+          updatedAt: Date.now(),
         }));
       });
     };
@@ -682,22 +869,51 @@ export function HomeScreen() {
   }, []);
 
   const requestDeviceTilt = useCallback(() => {
-    if (!('DeviceOrientationEvent' in window) || tiltPermissionRef.current !== 'unknown') return;
+    if (!('DeviceOrientationEvent' in window)) {
+      setTiltDebug(prev => ({ ...prev, supported: false }));
+      return;
+    }
+    if (tiltPermissionRef.current !== 'unknown') {
+      setTiltDebug(prev => ({ ...prev, permission: tiltPermissionRef.current }));
+      return;
+    }
     const orientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventConstructorWithPermission;
     if (typeof orientationEvent.requestPermission !== 'function') {
       tiltPermissionRef.current = 'granted';
+      setTiltDebug(prev => ({ ...prev, supported: true, permission: 'granted' }));
       return;
     }
 
     tiltPermissionRef.current = 'requested';
+    setTiltDebug(prev => ({ ...prev, supported: true, permission: 'requested' }));
     orientationEvent.requestPermission()
       .then(result => {
         tiltPermissionRef.current = result === 'granted' ? 'granted' : 'denied';
         if (result === 'granted') tiltBaselineRef.current = null;
+        setTiltDebug(prev => ({
+          ...prev,
+          supported: true,
+          permission: tiltPermissionRef.current,
+        }));
       })
       .catch(() => {
         tiltPermissionRef.current = 'denied';
+        setTiltDebug(prev => ({ ...prev, supported: true, permission: 'denied' }));
       });
+  }, []);
+
+  const recenterDeviceTilt = useCallback(() => {
+    tiltBaselineRef.current = null;
+    pendingTiltRef.current = { x: 0, y: 0 };
+    setMouse({ x: 0, y: 0 });
+    setTiltDebug(prev => ({
+      ...prev,
+      deltaBeta: 0,
+      deltaGamma: 0,
+      x: 0,
+      y: 0,
+      updatedAt: Date.now(),
+    }));
   }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -900,6 +1116,12 @@ export function HomeScreen() {
           {available} NODES ACTIVE
         </div>
       </div>
+
+      <TiltDebugPanel
+        debug={tiltDebug}
+        onEnable={requestDeviceTilt}
+        onRecenter={recenterDeviceTilt}
+      />
 
       {exitingTo && (
         <div className="absolute inset-0 z-[80] pointer-events-none hideout-blackout" style={{ background: '#000', opacity: 0 }} />
