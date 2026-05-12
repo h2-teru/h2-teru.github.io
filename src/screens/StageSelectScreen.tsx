@@ -569,6 +569,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
     const boxGeo = new THREE.BoxGeometry(1, 1, 1);
     const edgeGeo = new THREE.EdgesGeometry(boxGeo);
     const baseGlowGeo = new THREE.CircleGeometry(1, 72);
+    const sideGlowGeo = new THREE.PlaneGeometry(1, 1);
     const lowMat = new THREE.MeshStandardMaterial({
       color: 0x0b2034,
       roughness: 0.72,
@@ -639,7 +640,8 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       bloomShell: THREE.Mesh;
       holoShell: THREE.Mesh;
       outerShell: THREE.Mesh;
-      crownGlow: THREE.Mesh;
+      bodyGlow: THREE.Mesh;
+      sideGlow: THREE.Mesh[];
       baseGlow: THREE.Mesh;
       edge: THREE.LineSegments;
       glow: THREE.LineSegments;
@@ -654,22 +656,22 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
       group.position.set(p.x, 0, p.z);
       root.add(group);
 
-      const riskWhiteMix = stage.risk === 'LOW' ? 0.24 : stage.risk === 'MED' ? 0.14 : 0.1;
+      const riskWhiteMix = stage.risk === 'LOW' ? 0.08 : stage.risk === 'MED' ? 0.06 : 0.05;
       const bodyColor = riskColor.clone().lerp(new THREE.Color(0xffffff), riskWhiteMix);
-      const shellColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.08);
-      const edgeColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.24);
-      const coreColor = riskColor.clone().lerp(new THREE.Color(0x06101c), 0.68);
+      const shellColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.04);
+      const edgeColor = riskColor.clone().lerp(new THREE.Color(0xffffff), 0.18);
+      const coreColor = riskColor.clone().lerp(new THREE.Color(0x06101c), 0.22);
       const spillColor = stage.risk === 'MED' ? new THREE.Color('#ff8f2e') : riskColor.clone();
-      const coreMat = new THREE.MeshStandardMaterial({
+      const coreMat = new THREE.MeshBasicMaterial({
         color: coreColor,
-        emissive: riskColor.clone().multiplyScalar(0.58),
-        emissiveIntensity: 0.72,
-        roughness: 0.48,
-        metalness: 0.34,
+        transparent: true,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        depthWrite: false,
       });
       const core = new THREE.Mesh(boxGeo, coreMat);
       core.position.y = bodyHeight / 2;
-      core.scale.set(bodyWidth * 0.84, bodyHeight * 0.985, bodyDepth * 0.84);
+      core.scale.set(bodyWidth * 0.94, bodyHeight * 0.985, bodyDepth * 0.94);
       core.visible = false;
       group.add(core);
 
@@ -692,13 +694,13 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
           transparent: true,
           opacity: 0,
           blending: THREE.AdditiveBlending,
-          side: THREE.DoubleSide,
+          side: THREE.BackSide,
           depthWrite: false,
           depthTest: false,
         }),
       );
       bloomShell.position.copy(body.position);
-      bloomShell.scale.set(bodyWidth * 1.06, bodyHeight * 1.02, bodyDepth * 1.06);
+      bloomShell.scale.set(bodyWidth * 1.12, bodyHeight * 1.08, bodyDepth * 1.12);
       group.add(bloomShell);
 
       const holoShell = new THREE.Mesh(
@@ -713,7 +715,7 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         }),
       );
       holoShell.position.copy(body.position);
-      holoShell.scale.set(bodyWidth * 1.01, bodyHeight * 1.005, bodyDepth * 1.01);
+      holoShell.scale.set(bodyWidth * 1.04, bodyHeight * 1.02, bodyDepth * 1.04);
       group.add(holoShell);
 
       const outerShell = new THREE.Mesh(
@@ -729,13 +731,13 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         }),
       );
       outerShell.position.copy(body.position);
-      outerShell.scale.set(bodyWidth * 1.22, bodyHeight * 1.04, bodyDepth * 1.22);
+      outerShell.scale.set(bodyWidth * 1.34, bodyHeight * 1.12, bodyDepth * 1.34);
       group.add(outerShell);
 
-      const crownGlow = new THREE.Mesh(
+      const bodyGlow = new THREE.Mesh(
         boxGeo,
         new THREE.MeshBasicMaterial({
-          color: edgeColor,
+          color: riskColor,
           transparent: true,
           opacity: 0,
           blending: THREE.AdditiveBlending,
@@ -744,9 +746,31 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
           depthTest: false,
         }),
       );
-      crownGlow.position.y = bodyHeight + 1.4;
-      crownGlow.scale.set(bodyWidth * 1.48, 2.2, bodyDepth * 1.48);
-      group.add(crownGlow);
+      bodyGlow.position.copy(body.position);
+      bodyGlow.scale.set(bodyWidth * 1.62, bodyHeight * 1.12, bodyDepth * 1.62);
+      group.add(bodyGlow);
+
+      const sideGlowMat = new THREE.MeshBasicMaterial({
+        color: riskColor,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const sideGlow = [
+        { x: 0, z: bodyDepth * 0.535, ry: 0, sx: bodyWidth * 1.04 },
+        { x: 0, z: -bodyDepth * 0.535, ry: Math.PI, sx: bodyWidth * 1.04 },
+        { x: bodyWidth * 0.535, z: 0, ry: Math.PI / 2, sx: bodyDepth * 1.04 },
+        { x: -bodyWidth * 0.535, z: 0, ry: -Math.PI / 2, sx: bodyDepth * 1.04 },
+      ].map(({ x, z, ry, sx }) => {
+        const panel = new THREE.Mesh(sideGlowGeo, sideGlowMat);
+        panel.position.set(x, bodyHeight / 2, z);
+        panel.rotation.y = ry;
+        panel.scale.set(sx, bodyHeight * 1.02, 1);
+        group.add(panel);
+        return panel;
+      });
 
       const baseGlow = new THREE.Mesh(
         baseGlowGeo,
@@ -802,7 +826,8 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         bloomShell,
         holoShell,
         outerShell,
-        crownGlow,
+        bodyGlow,
+        sideGlow,
         baseGlow,
         edge,
         glow,
@@ -894,30 +919,35 @@ function CityScene3D({ active, selectedId, center, zoom, completedStages, overvi
         tower.group.scale.setScalar(1);
 
         const bodyMat = tower.body.material as THREE.MeshBasicMaterial;
-        const coreMat = tower.core.material as THREE.MeshStandardMaterial;
+        const coreMat = tower.core.material as THREE.MeshBasicMaterial;
         const bloomShellMat = tower.bloomShell.material as THREE.MeshBasicMaterial;
         const holoShellMat = tower.holoShell.material as THREE.MeshBasicMaterial;
         const outerShellMat = tower.outerShell.material as THREE.MeshBasicMaterial;
-        const crownGlowMat = tower.crownGlow.material as THREE.MeshBasicMaterial;
+        const bodyGlowMat = tower.bodyGlow.material as THREE.MeshBasicMaterial;
+        const sideGlowMat = tower.sideGlow[0].material as THREE.MeshBasicMaterial;
         const baseGlowMat = tower.baseGlow.material as THREE.MeshBasicMaterial;
         const edgeMatLocal = tower.edge.material as THREE.LineBasicMaterial;
         const glowMatLocal = tower.glow.material as THREE.LineBasicMaterial;
 
         tower.core.visible = unlocked;
-        coreMat.emissiveIntensity = selected ? 1.04 + pulse * 0.28 : 0.7 + pulse * 0.18;
-        bodyMat.opacity = unlocked ? (selected ? 0.3 + pulse * 0.05 : 0.2 + pulse * 0.04) : 0;
-        bloomShellMat.opacity = unlocked ? (selected ? 0.21 + pulse * 0.06 : 0.12 + pulse * 0.04) : 0;
-        holoShellMat.opacity = unlocked ? (selected ? 0.19 + pulse * 0.05 : 0.11 + pulse * 0.04) : 0;
-        outerShellMat.opacity = unlocked ? (selected ? 0.075 + pulse * 0.035 : 0.035 + pulse * 0.025) : 0;
-        crownGlowMat.opacity = unlocked ? (selected ? 0.5 + pulse * 0.15 : 0.28 + pulse * 0.1) : 0;
-        baseGlowMat.opacity = unlocked ? (selected ? 0.16 + pulse * 0.055 : 0.08 + pulse * 0.035) : 0;
+        coreMat.opacity = unlocked ? (selected ? 0.52 + pulse * 0.06 : 0.36 + pulse * 0.045) : 0;
+        bodyMat.opacity = unlocked ? (selected ? 0.16 + pulse * 0.03 : 0.1 + pulse * 0.025) : 0;
+        bloomShellMat.opacity = unlocked ? (selected ? 0.14 + pulse * 0.045 : 0.085 + pulse * 0.035) : 0;
+        holoShellMat.opacity = unlocked ? (selected ? 0.08 + pulse * 0.035 : 0.055 + pulse * 0.025) : 0;
+        outerShellMat.opacity = unlocked ? (selected ? 0.09 + pulse * 0.035 : 0.052 + pulse * 0.025) : 0;
+        bodyGlowMat.opacity = unlocked ? (selected ? 0.08 + pulse * 0.03 : 0.04 + pulse * 0.018) : 0;
+        sideGlowMat.opacity = unlocked ? (selected ? 0.7 + pulse * 0.1 : 0.42 + pulse * 0.075) : 0;
+        baseGlowMat.opacity = unlocked ? (selected ? 0.12 + pulse * 0.04 : 0.06 + pulse * 0.025) : 0;
         edgeMatLocal.opacity = unlocked ? (selected ? 0.86 : 0.68 + pulse * 0.06) : 0.05;
-        glowMatLocal.opacity = unlocked ? (selected ? 0.72 : 0.46 + pulse * 0.12) : 0.02;
-        tower.pointLight.intensity = unlocked ? (selected ? 1.15 + pulse * 0.45 : 0.32 + pulse * 0.18) : 0;
+        glowMatLocal.opacity = unlocked ? (selected ? 0.78 : 0.54 + pulse * 0.13) : 0.02;
+        tower.pointLight.intensity = unlocked ? (selected ? 1.6 + pulse * 0.48 : 0.52 + pulse * 0.22) : 0;
         tower.bloomShell.visible = unlocked;
         tower.holoShell.visible = unlocked;
         tower.outerShell.visible = unlocked;
-        tower.crownGlow.visible = unlocked;
+        tower.bodyGlow.visible = unlocked;
+        tower.sideGlow.forEach(panel => {
+          panel.visible = unlocked;
+        });
         tower.baseGlow.visible = unlocked;
       });
 
