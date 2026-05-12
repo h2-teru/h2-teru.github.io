@@ -2,6 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CtaButton } from '../components/CtaButton';
+import { getCachedTiltPermission, getDeviceTiltSupport, requestDeviceTiltPermission, } from '../utils/deviceTilt';
 const TITLE_EXIT_DELAY_MS = 820;
 // Periodically glitches a data value for realism
 function DataLabel({ val, x, y, size = 8 }) {
@@ -206,6 +207,8 @@ export function TitleScreen() {
     const startRun = useGameStore((s) => s.startRun);
     const [ready, setReady] = useState(false);
     const [exiting, setExiting] = useState(false);
+    const [tiltSupport] = useState(() => getDeviceTiltSupport());
+    const [tiltPermission, setTiltPermission] = useState(() => getCachedTiltPermission());
     const startTimerRef = useRef(0);
     useEffect(() => {
         const t = setTimeout(() => setReady(true), 320);
@@ -219,6 +222,26 @@ export function TitleScreen() {
         clearTimeout(startTimerRef.current);
         startTimerRef.current = window.setTimeout(startRun, TITLE_EXIT_DELAY_MS);
     };
+    const handleGyroPermission = async () => {
+        if (exiting || tiltPermission === 'requested' || !tiltSupport.supported)
+            return;
+        setTiltPermission('requested');
+        setTiltPermission(await requestDeviceTiltPermission());
+    };
+    const gyroLabel = !tiltSupport.supported
+        ? 'GYRO UNAVAILABLE'
+        : tiltPermission === 'granted'
+            ? 'GYRO ONLINE'
+            : tiltPermission === 'denied'
+                ? 'RETRY GYRO'
+                : tiltPermission === 'requested'
+                    ? 'GYRO REQUESTING'
+                    : 'ENABLE GYRO';
+    const gyroColor = tiltPermission === 'granted'
+        ? '#70ffba'
+        : tiltPermission === 'denied'
+            ? '#ff784f'
+            : '#4da3ff';
     return (_jsxs("div", { className: "relative w-full h-full font-mono overflow-hidden select-none", style: { background: '#020812' }, children: [_jsx("style", { children: `
         @keyframes scene-drift {
           0%   { transform: rotateY(-4deg) rotateX(2deg)   translateZ(-18px); }
@@ -397,7 +420,14 @@ export function TitleScreen() {
                         }, children: "HACK THE CITY \u00B7 STAY INVISIBLE" }), _jsxs("div", { style: { display: 'flex', flexDirection: 'column', gap: 8, marginTop: 28 }, children: [_jsx(CtaButton, { onClick: handleStart, marker: true, className: `active:brightness-90 ${exiting ? 'title-start-pressed' : ''}`, style: {
                                     background: '#4da3ff',
                                     boxShadow: '0 0 28px rgba(77,163,255,0.45)',
-                                }, children: "> START THE GAME" }), _jsx(CtaButton, { onClick: () => { }, variant: "muted", className: "font-light", children: "> OPTIONS" })] })] }), _jsx("div", { className: `absolute z-10 ${exiting ? 'title-foreground-exit' : ''}`, style: {
+                                }, children: "> START THE GAME" }), _jsxs(CtaButton, { onClick: handleGyroPermission, variant: "ghost", disabled: exiting || tiltPermission === 'requested' || !tiltSupport.supported, style: {
+                                    border: `1px solid ${gyroColor}55`,
+                                    color: gyroColor,
+                                    background: `linear-gradient(90deg, ${gyroColor}14, rgba(0,0,0,0.18))`,
+                                    boxShadow: tiltPermission === 'granted'
+                                        ? `0 0 24px ${gyroColor}2e, inset 0 0 14px ${gyroColor}12`
+                                        : `0 0 12px ${gyroColor}18`,
+                                }, children: ["> ", gyroLabel] }), _jsx(CtaButton, { onClick: () => { }, variant: "muted", className: "font-light", children: "> OPTIONS" })] })] }), _jsx("div", { className: `absolute z-10 ${exiting ? 'title-foreground-exit' : ''}`, style: {
                     bottom: 'clamp(30px, 7vh, 50px)',
                     right: 'clamp(22px, 6.5%, 38px)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center',

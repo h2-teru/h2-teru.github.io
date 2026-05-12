@@ -2,22 +2,21 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { STAGES, RISK_COLOR } from '../data/stages';
 import { useGameStore, type Screen } from '../store/gameStore';
 import { MapSelectionPulseEffects } from '../components/MapSelectionPulse';
+import {
+  getCachedTiltPermission,
+  getDeviceTiltSupport,
+  mapMotionToTilt,
+  mapOrientationToTilt,
+  requestDeviceTiltPermission,
+  type TiltPermissionStatus,
+  type TiltRawReading,
+  type TiltSensorSource,
+  type TiltVector,
+} from '../utils/deviceTilt';
 
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 
 const HIDEOUT_EXIT_DELAY_MS = 560;
-const clampTilt = (value: number) => Math.max(-0.5, Math.min(0.5, value));
-
-type DeviceOrientationEventConstructorWithPermission = typeof DeviceOrientationEvent & {
-  requestPermission?: () => Promise<PermissionState>;
-};
-
-type DeviceMotionEventConstructorWithPermission = typeof DeviceMotionEvent & {
-  requestPermission?: () => Promise<PermissionState>;
-};
-
-type TiltPermissionStatus = 'unknown' | 'requested' | 'granted' | 'denied';
-type TiltSensorSource = 'none' | 'orientation' | 'motion';
 
 type TiltDebugState = {
   supported: boolean;
@@ -36,17 +35,6 @@ type TiltDebugState = {
   x: number;
   y: number;
   updatedAt: number | null;
-};
-
-type TiltRawReading = {
-  source: TiltSensorSource;
-  beta: number | null;
-  gamma: number | null;
-  motionX: number | null;
-  motionY: number | null;
-  motionZ: number | null;
-  deltaBeta: number;
-  deltaGamma: number;
 };
 
 const RANK_TABLE = [
@@ -516,7 +504,7 @@ function HideoutMarketButtonPreview({
 
 function HideoutBackgroundScene({ mouse }: { mouse: { x: number; y: number } }) {
   const driftX = mouse.x * -18;
-  const driftY = mouse.y * -10;
+  const driftY = mouse.y * -16;
 
   return (
     <div
@@ -586,9 +574,9 @@ function HideoutHologramDeck({
   onOpenMarket: () => void;
 }) {
   const driftX = mouse.x * -20;
-  const driftY = mouse.y * -14;
+  const driftY = mouse.y * -22;
   const rotateY = mouse.x * 16;
-  const rotateX = mouse.y * -12;
+  const rotateX = mouse.y * -18;
 
   return (
     <div
@@ -807,26 +795,27 @@ export function HomeScreen() {
   const [mouse,   setMouse]   = useState({ x: 0, y: 0 });
   const [entered, setEntered] = useState(false);
   const [exitingTo, setExitingTo] = useState<Screen | null>(null);
-  const [tiltDebug, setTiltDebug] = useState<TiltDebugState>(() => ({
-    supported: typeof window !== 'undefined' && (
-      'DeviceOrientationEvent' in window || 'DeviceMotionEvent' in window
-    ),
-    orientationSupported: typeof window !== 'undefined' && 'DeviceOrientationEvent' in window,
-    motionSupported: typeof window !== 'undefined' && 'DeviceMotionEvent' in window,
-    permission: 'unknown',
-    source: 'none',
-    events: 0,
-    beta: null,
-    gamma: null,
-    motionX: null,
-    motionY: null,
-    motionZ: null,
-    deltaBeta: 0,
-    deltaGamma: 0,
-    x: 0,
-    y: 0,
-    updatedAt: null,
-  }));
+  const [tiltDebug, setTiltDebug] = useState<TiltDebugState>(() => {
+    const support = getDeviceTiltSupport();
+    return {
+      supported: support.supported,
+      orientationSupported: support.orientationSupported,
+      motionSupported: support.motionSupported,
+      permission: getCachedTiltPermission(),
+      source: 'none',
+      events: 0,
+      beta: null,
+      gamma: null,
+      motionX: null,
+      motionY: null,
+      motionZ: null,
+      deltaBeta: 0,
+      deltaGamma: 0,
+      x: 0,
+      y: 0,
+      updatedAt: null,
+    };
+  });
   const containerRef          = useRef<HTMLDivElement>(null);
   const exitTimerRef          = useRef(0);
   const tiltBaselineRef       = useRef<{ beta: number; gamma: number } | null>(null);
@@ -835,7 +824,7 @@ export function HomeScreen() {
   const pendingTiltRef        = useRef({ x: 0, y: 0 });
   const pendingTiltRawRef     = useRef<TiltRawReading | null>(null);
   const tiltEventCountRef     = useRef(0);
-  const tiltPermissionRef     = useRef<TiltPermissionStatus>('unknown');
+  const tiltPermissionRef     = useRef<TiltPermissionStatus>(getCachedTiltPermission());
 
   const rank      = getRank(completedStages.length);
   const available = STAGES.filter(s => completedStages.length >= s.requiredCompleted).length;
@@ -848,9 +837,8 @@ export function HomeScreen() {
   useEffect(() => () => clearTimeout(exitTimerRef.current), []);
 
   useEffect(() => {
-    const orientationSupported = 'DeviceOrientationEvent' in window;
-    const motionSupported = 'DeviceMotionEvent' in window;
-    if (!orientationSupported && !motionSupported) {
+    const support = getDeviceTiltSupport();
+    if (!support.supported) {
       setTiltDebug(prev => ({
         ...prev,
         supported: false,
@@ -863,11 +851,12 @@ export function HomeScreen() {
     setTiltDebug(prev => ({
       ...prev,
       supported: true,
-      orientationSupported,
-      motionSupported,
+      orientationSupported: support.orientationSupported,
+      motionSupported: support.motionSupported,
+      permission: tiltPermissionRef.current,
     }));
 
-    const scheduleTiltUpdate = (nextTilt: { x: number; y: number }, raw: TiltRawReading) => {
+    const scheduleTiltUpdate = (nextTilt: TiltVector, raw: TiltRawReading) => {
       pendingTiltRef.current = nextTilt;
       pendingTiltRawRef.current = raw;
       tiltEventCountRef.current += 1;
@@ -884,8 +873,8 @@ export function HomeScreen() {
         setTiltDebug(prev => ({
           ...prev,
           supported: true,
-          orientationSupported,
-          motionSupported,
+          orientationSupported: support.orientationSupported,
+          motionSupported: support.motionSupported,
           permission: tiltPermissionRef.current,
           source: reading?.source ?? prev.source,
           events: tiltEventCountRef.current,
@@ -912,23 +901,8 @@ export function HomeScreen() {
         tiltBaselineRef.current = { beta, gamma };
       }
 
-      const base = tiltBaselineRef.current;
-      const deltaBeta = beta - base.beta;
-      const deltaGamma = gamma - base.gamma;
-      const nextTilt = {
-        x: clampTilt(deltaGamma / 18),
-        y: clampTilt(deltaBeta / 24),
-      };
-      scheduleTiltUpdate(nextTilt, {
-        source: 'orientation',
-        beta,
-        gamma,
-        motionX: null,
-        motionY: null,
-        motionZ: null,
-        deltaBeta,
-        deltaGamma,
-      });
+      const mapped = mapOrientationToTilt(beta, gamma, tiltBaselineRef.current);
+      scheduleTiltUpdate(mapped.nextTilt, mapped.raw);
     };
 
     const handleMotion = (event: DeviceMotionEvent) => {
@@ -943,47 +917,30 @@ export function HomeScreen() {
         motionBaselineRef.current = { x: gx, y: gy, z: gz };
       }
 
-      const base = motionBaselineRef.current;
-      const deltaX = gx - base.x;
-      const deltaY = gy - base.y;
-      const nextTilt = {
-        x: clampTilt(deltaX / 5.6),
-        y: clampTilt(deltaY / 5.6),
-      };
-
-      scheduleTiltUpdate(nextTilt, {
-        source: 'motion',
-        beta: null,
-        gamma: null,
-        motionX: gx,
-        motionY: gy,
-        motionZ: gz,
-        deltaBeta: deltaY,
-        deltaGamma: deltaX,
-      });
+      const mapped = mapMotionToTilt(gx, gy, gz, motionBaselineRef.current);
+      scheduleTiltUpdate(mapped.nextTilt, mapped.raw);
     };
 
-    if (orientationSupported) {
+    if (support.orientationSupported) {
       window.addEventListener('deviceorientation', handleOrientation, { passive: true });
     }
-    if (motionSupported) {
+    if (support.motionSupported) {
       window.addEventListener('devicemotion', handleMotion, { passive: true });
     }
     return () => {
-      if (orientationSupported) {
+      if (support.orientationSupported) {
         window.removeEventListener('deviceorientation', handleOrientation);
       }
-      if (motionSupported) {
+      if (support.motionSupported) {
         window.removeEventListener('devicemotion', handleMotion);
       }
       if (tiltFrameRef.current) cancelAnimationFrame(tiltFrameRef.current);
     };
   }, []);
 
-  const requestDeviceTilt = useCallback(() => {
-    const orientationSupported = 'DeviceOrientationEvent' in window;
-    const motionSupported = 'DeviceMotionEvent' in window;
-    if (!orientationSupported && !motionSupported) {
+  const requestDeviceTilt = useCallback(async () => {
+    const support = getDeviceTiltSupport();
+    if (!support.supported) {
       setTiltDebug(prev => ({
         ...prev,
         supported: false,
@@ -996,8 +953,8 @@ export function HomeScreen() {
       setTiltDebug(prev => ({
         ...prev,
         supported: true,
-        orientationSupported,
-        motionSupported,
+        orientationSupported: support.orientationSupported,
+        motionSupported: support.motionSupported,
         permission: tiltPermissionRef.current,
       }));
       return;
@@ -1006,42 +963,8 @@ export function HomeScreen() {
       setTiltDebug(prev => ({
         ...prev,
         supported: true,
-        orientationSupported,
-        motionSupported,
-        permission: 'granted',
-      }));
-      return;
-    }
-
-    let permissionRequest: Promise<PermissionState> | null = null;
-    if (motionSupported) {
-      const motionEvent = window.DeviceMotionEvent as DeviceMotionEventConstructorWithPermission;
-      if (typeof motionEvent.requestPermission === 'function') {
-        try {
-          permissionRequest = motionEvent.requestPermission();
-        } catch {
-          permissionRequest = Promise.resolve('denied');
-        }
-      }
-    }
-    if (!permissionRequest && orientationSupported) {
-      const orientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventConstructorWithPermission;
-      if (typeof orientationEvent.requestPermission === 'function') {
-        try {
-          permissionRequest = orientationEvent.requestPermission();
-        } catch {
-          permissionRequest = Promise.resolve('denied');
-        }
-      }
-    }
-
-    if (!permissionRequest) {
-      tiltPermissionRef.current = 'granted';
-      setTiltDebug(prev => ({
-        ...prev,
-        supported: true,
-        orientationSupported,
-        motionSupported,
+        orientationSupported: support.orientationSupported,
+        motionSupported: support.motionSupported,
         permission: 'granted',
       }));
       return;
@@ -1051,35 +974,24 @@ export function HomeScreen() {
     setTiltDebug(prev => ({
       ...prev,
       supported: true,
-      orientationSupported,
-      motionSupported,
+      orientationSupported: support.orientationSupported,
+      motionSupported: support.motionSupported,
       permission: 'requested',
     }));
-    permissionRequest
-      .then(result => {
-        tiltPermissionRef.current = result === 'granted' ? 'granted' : 'denied';
-        if (result === 'granted') {
-          tiltBaselineRef.current = null;
-          motionBaselineRef.current = null;
-        }
-        setTiltDebug(prev => ({
-          ...prev,
-          supported: true,
-          orientationSupported,
-          motionSupported,
-          permission: tiltPermissionRef.current,
-        }));
-      })
-      .catch(() => {
-        tiltPermissionRef.current = 'denied';
-        setTiltDebug(prev => ({
-          ...prev,
-          supported: true,
-          orientationSupported,
-          motionSupported,
-          permission: 'denied',
-        }));
-      });
+
+    const result = await requestDeviceTiltPermission();
+    tiltPermissionRef.current = result;
+    if (result === 'granted') {
+      tiltBaselineRef.current = null;
+      motionBaselineRef.current = null;
+    }
+    setTiltDebug(prev => ({
+      ...prev,
+      supported: true,
+      orientationSupported: support.orientationSupported,
+      motionSupported: support.motionSupported,
+      permission: result,
+    }));
   }, []);
 
   const recenterDeviceTilt = useCallback(() => {
