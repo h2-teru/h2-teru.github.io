@@ -5,6 +5,7 @@ import { useGameStore } from '../store/gameStore';
 import { MapSelectionPulseEffects } from '../components/MapSelectionPulse';
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 const HIDEOUT_EXIT_DELAY_MS = 560;
+const clampTilt = (value) => Math.max(-0.5, Math.min(0.5, value));
 const RANK_TABLE = [
     { min: 0, label: 'UNKNOWN', color: 'rgba(200,200,220,0.45)' },
     { min: 1, label: 'OPERATIVE', color: '#4da3ff' },
@@ -249,6 +250,10 @@ export function HomeScreen() {
     const [exitingTo, setExitingTo] = useState(null);
     const containerRef = useRef(null);
     const exitTimerRef = useRef(0);
+    const tiltBaselineRef = useRef(null);
+    const tiltFrameRef = useRef(0);
+    const pendingTiltRef = useRef({ x: 0, y: 0 });
+    const tiltPermissionRef = useRef('unknown');
     const rank = getRank(completedStages.length);
     const available = STAGES.filter(s => completedStages.length >= s.requiredCompleted).length;
     useEffect(() => {
@@ -256,6 +261,59 @@ export function HomeScreen() {
         return () => clearTimeout(t);
     }, []);
     useEffect(() => () => clearTimeout(exitTimerRef.current), []);
+    useEffect(() => {
+        if (!('DeviceOrientationEvent' in window))
+            return;
+        const handleOrientation = (event) => {
+            if (typeof event.beta !== 'number' || typeof event.gamma !== 'number')
+                return;
+            const beta = event.beta;
+            const gamma = event.gamma;
+            if (!tiltBaselineRef.current) {
+                tiltBaselineRef.current = { beta, gamma };
+            }
+            const base = tiltBaselineRef.current;
+            pendingTiltRef.current = {
+                x: clampTilt((gamma - base.gamma) / 34),
+                y: clampTilt((beta - base.beta) / 42),
+            };
+            if (tiltFrameRef.current)
+                return;
+            tiltFrameRef.current = window.requestAnimationFrame(() => {
+                tiltFrameRef.current = 0;
+                const next = pendingTiltRef.current;
+                setMouse(prev => ({
+                    x: prev.x + (next.x - prev.x) * 0.18,
+                    y: prev.y + (next.y - prev.y) * 0.18,
+                }));
+            });
+        };
+        window.addEventListener('deviceorientation', handleOrientation, { passive: true });
+        return () => {
+            window.removeEventListener('deviceorientation', handleOrientation);
+            if (tiltFrameRef.current)
+                cancelAnimationFrame(tiltFrameRef.current);
+        };
+    }, []);
+    const requestDeviceTilt = useCallback(() => {
+        if (!('DeviceOrientationEvent' in window) || tiltPermissionRef.current !== 'unknown')
+            return;
+        const orientationEvent = window.DeviceOrientationEvent;
+        if (typeof orientationEvent.requestPermission !== 'function') {
+            tiltPermissionRef.current = 'granted';
+            return;
+        }
+        tiltPermissionRef.current = 'requested';
+        orientationEvent.requestPermission()
+            .then(result => {
+            tiltPermissionRef.current = result === 'granted' ? 'granted' : 'denied';
+            if (result === 'granted')
+                tiltBaselineRef.current = null;
+        })
+            .catch(() => {
+            tiltPermissionRef.current = 'denied';
+        });
+    }, []);
     const handleMouseMove = useCallback((e) => {
         const rect = containerRef.current?.getBoundingClientRect();
         if (!rect)
@@ -276,7 +334,7 @@ export function HomeScreen() {
         clearTimeout(exitTimerRef.current);
         exitTimerRef.current = window.setTimeout(() => set({ screen: key }), HIDEOUT_EXIT_DELAY_MS);
     }
-    return (_jsxs("div", { ref: containerRef, onMouseMove: handleMouseMove, className: "relative w-full h-full overflow-hidden select-none font-mono", style: { background: '#020812' }, children: [_jsx("style", { children: `
+    return (_jsxs("div", { ref: containerRef, onPointerDown: requestDeviceTilt, onMouseMove: handleMouseMove, className: "relative w-full h-full overflow-hidden select-none font-mono", style: { background: '#020812' }, children: [_jsx("style", { children: `
         @keyframes sp-flicker { 0%,100%{opacity:1} 91%{opacity:.82} 93%{opacity:.1} 95%{opacity:1} 97%{opacity:.65} }
         @keyframes sp-room-in { from{opacity:0;filter:blur(6px) brightness(0.15)} to{opacity:1;filter:blur(0) brightness(1)} }
         @keyframes sp-hud-in  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }

@@ -6,6 +6,11 @@ import { MapSelectionPulseEffects } from '../components/MapSelectionPulse';
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 
 const HIDEOUT_EXIT_DELAY_MS = 560;
+const clampTilt = (value: number) => Math.max(-0.5, Math.min(0.5, value));
+
+type DeviceOrientationEventConstructorWithPermission = typeof DeviceOrientationEvent & {
+  requestPermission?: () => Promise<PermissionState>;
+};
 
 const RANK_TABLE = [
   { min: 0, label: 'UNKNOWN',   color: 'rgba(200,200,220,0.45)' },
@@ -622,6 +627,10 @@ export function HomeScreen() {
   const [exitingTo, setExitingTo] = useState<Screen | null>(null);
   const containerRef          = useRef<HTMLDivElement>(null);
   const exitTimerRef          = useRef(0);
+  const tiltBaselineRef       = useRef<{ beta: number; gamma: number } | null>(null);
+  const tiltFrameRef          = useRef(0);
+  const pendingTiltRef        = useRef({ x: 0, y: 0 });
+  const tiltPermissionRef     = useRef<'unknown' | 'requested' | 'granted' | 'denied'>('unknown');
 
   const rank      = getRank(completedStages.length);
   const available = STAGES.filter(s => completedStages.length >= s.requiredCompleted).length;
@@ -632,6 +641,61 @@ export function HomeScreen() {
   }, []);
 
   useEffect(() => () => clearTimeout(exitTimerRef.current), []);
+
+  useEffect(() => {
+    if (!('DeviceOrientationEvent' in window)) return;
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      if (typeof event.beta !== 'number' || typeof event.gamma !== 'number') return;
+
+      const beta = event.beta;
+      const gamma = event.gamma;
+      if (!tiltBaselineRef.current) {
+        tiltBaselineRef.current = { beta, gamma };
+      }
+
+      const base = tiltBaselineRef.current;
+      pendingTiltRef.current = {
+        x: clampTilt((gamma - base.gamma) / 34),
+        y: clampTilt((beta - base.beta) / 42),
+      };
+
+      if (tiltFrameRef.current) return;
+      tiltFrameRef.current = window.requestAnimationFrame(() => {
+        tiltFrameRef.current = 0;
+        const next = pendingTiltRef.current;
+        setMouse(prev => ({
+          x: prev.x + (next.x - prev.x) * 0.18,
+          y: prev.y + (next.y - prev.y) * 0.18,
+        }));
+      });
+    };
+
+    window.addEventListener('deviceorientation', handleOrientation, { passive: true });
+    return () => {
+      window.removeEventListener('deviceorientation', handleOrientation);
+      if (tiltFrameRef.current) cancelAnimationFrame(tiltFrameRef.current);
+    };
+  }, []);
+
+  const requestDeviceTilt = useCallback(() => {
+    if (!('DeviceOrientationEvent' in window) || tiltPermissionRef.current !== 'unknown') return;
+    const orientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventConstructorWithPermission;
+    if (typeof orientationEvent.requestPermission !== 'function') {
+      tiltPermissionRef.current = 'granted';
+      return;
+    }
+
+    tiltPermissionRef.current = 'requested';
+    orientationEvent.requestPermission()
+      .then(result => {
+        tiltPermissionRef.current = result === 'granted' ? 'granted' : 'denied';
+        if (result === 'granted') tiltBaselineRef.current = null;
+      })
+      .catch(() => {
+        tiltPermissionRef.current = 'denied';
+      });
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -657,6 +721,7 @@ export function HomeScreen() {
   return (
     <div
       ref={containerRef}
+      onPointerDown={requestDeviceTilt}
       onMouseMove={handleMouseMove}
       className="relative w-full h-full overflow-hidden select-none font-mono"
       style={{ background: '#020812' }}
