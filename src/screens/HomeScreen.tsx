@@ -12,6 +12,11 @@ import {
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 
 const HIDEOUT_EXIT_DELAY_MS = 560;
+const HIDEOUT_TILT_ALPHA = 0.1;
+const HIDEOUT_TILT_DEADZONE = 0.035;
+const HIDEOUT_TILT_LIMIT = 0.38;
+const HIDEOUT_ORIENTATION_BASELINE_SAMPLES = 10;
+const HIDEOUT_MOTION_BASELINE_SAMPLES = 14;
 
 const RANK_TABLE = [
   { min: 0, label: 'UNKNOWN',   color: 'rgba(200,200,220,0.45)' },
@@ -21,6 +26,13 @@ const RANK_TABLE = [
 ] as const;
 const getRank = (n: number) =>
   [...RANK_TABLE].reverse().find(r => n >= r.min) ?? RANK_TABLE[0];
+
+const stabilizeHideoutTilt = (value: number) => {
+  const clamped = Math.max(-HIDEOUT_TILT_LIMIT, Math.min(HIDEOUT_TILT_LIMIT, value));
+  const magnitude = Math.abs(clamped);
+  if (magnitude < HIDEOUT_TILT_DEADZONE) return 0;
+  return Math.sign(clamped) * (magnitude - HIDEOUT_TILT_DEADZONE);
+};
 
 // ─── Hideout 3D Holographic UI ───────────────────────────────────────────────
 
@@ -479,8 +491,8 @@ function HideoutMarketButtonPreview({
 }
 
 function HideoutBackgroundScene({ mouse }: { mouse: { x: number; y: number } }) {
-  const driftX = mouse.x * -18;
-  const driftY = mouse.y * -16;
+  const driftX = mouse.x * -15;
+  const driftY = mouse.y * -13;
 
   return (
     <div
@@ -549,10 +561,10 @@ function HideoutHologramDeck({
   onOpenBoard: () => void;
   onOpenMarket: () => void;
 }) {
-  const driftX = mouse.x * -20;
-  const driftY = mouse.y * -22;
-  const rotateY = mouse.x * 16;
-  const rotateX = mouse.y * -18;
+  const driftX = mouse.x * -16;
+  const driftY = mouse.y * -18;
+  const rotateY = mouse.x * 12;
+  const rotateX = mouse.y * -14;
 
   return (
     <div
@@ -560,7 +572,7 @@ function HideoutHologramDeck({
         position: 'absolute',
         inset: 0,
         perspective: '840px',
-        perspectiveOrigin: '50% 48%',
+        perspectiveOrigin: '48.5% 48%',
         pointerEvents: exiting ? 'none' : 'auto',
         zIndex: 10,
       }}
@@ -568,7 +580,7 @@ function HideoutHologramDeck({
       <div
         style={{
           position: 'absolute',
-          left: '50%',
+          left: '48.5%',
           top: '49%',
           transformStyle: 'preserve-3d',
           transform: `translateX(${driftX}px) translateY(${driftY}px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(1.04)`,
@@ -631,10 +643,11 @@ export function HomeScreen() {
   const [exitingTo, setExitingTo] = useState<Screen | null>(null);
   const containerRef          = useRef<HTMLDivElement>(null);
   const exitTimerRef          = useRef(0);
-  const tiltBaselineRef       = useRef<{ beta: number; gamma: number } | null>(null);
-  const motionBaselineRef     = useRef<{ x: number; y: number; z: number } | null>(null);
+  const tiltBaselineRef       = useRef<{ beta: number; gamma: number; samples: number } | null>(null);
+  const motionBaselineRef     = useRef<{ x: number; y: number; z: number; samples: number } | null>(null);
   const tiltFrameRef          = useRef(0);
   const pendingTiltRef        = useRef({ x: 0, y: 0 });
+  const lastOrientationAtRef  = useRef(0);
 
   const rank      = getRank(completedStages.length);
   const available = STAGES.filter(s => completedStages.length >= s.requiredCompleted).length;
@@ -651,15 +664,18 @@ export function HomeScreen() {
     if (!support.supported) return;
 
     const scheduleTiltUpdate = (nextTilt: TiltVector) => {
-      pendingTiltRef.current = nextTilt;
+      pendingTiltRef.current = {
+        x: stabilizeHideoutTilt(nextTilt.x),
+        y: stabilizeHideoutTilt(nextTilt.y),
+      };
 
       if (tiltFrameRef.current) return;
       tiltFrameRef.current = window.requestAnimationFrame(() => {
         tiltFrameRef.current = 0;
         const next = pendingTiltRef.current;
         setMouse(prev => ({
-          x: prev.x + (next.x - prev.x) * 0.32,
-          y: prev.y + (next.y - prev.y) * 0.32,
+          x: prev.x + (next.x - prev.x) * HIDEOUT_TILT_ALPHA,
+          y: prev.y + (next.y - prev.y) * HIDEOUT_TILT_ALPHA,
         }));
       });
     };
@@ -669,8 +685,19 @@ export function HomeScreen() {
 
       const beta = event.beta;
       const gamma = event.gamma;
+      lastOrientationAtRef.current = Date.now();
       if (!tiltBaselineRef.current) {
-        tiltBaselineRef.current = { beta, gamma };
+        tiltBaselineRef.current = { beta, gamma, samples: 1 };
+        return;
+      }
+      if (tiltBaselineRef.current.samples < HIDEOUT_ORIENTATION_BASELINE_SAMPLES) {
+        const samples = tiltBaselineRef.current.samples + 1;
+        tiltBaselineRef.current = {
+          beta: tiltBaselineRef.current.beta + (beta - tiltBaselineRef.current.beta) / samples,
+          gamma: tiltBaselineRef.current.gamma + (gamma - tiltBaselineRef.current.gamma) / samples,
+          samples,
+        };
+        return;
       }
 
       const mapped = mapOrientationToTilt(beta, gamma, tiltBaselineRef.current);
@@ -684,9 +711,21 @@ export function HomeScreen() {
       const gy = gravity.y;
       const gz = gravity.z;
       if (typeof gx !== 'number' || typeof gy !== 'number' || typeof gz !== 'number') return;
+      if (support.orientationSupported && Date.now() - lastOrientationAtRef.current < 700) return;
 
       if (!motionBaselineRef.current) {
-        motionBaselineRef.current = { x: gx, y: gy, z: gz };
+        motionBaselineRef.current = { x: gx, y: gy, z: gz, samples: 1 };
+        return;
+      }
+      if (motionBaselineRef.current.samples < HIDEOUT_MOTION_BASELINE_SAMPLES) {
+        const samples = motionBaselineRef.current.samples + 1;
+        motionBaselineRef.current = {
+          x: motionBaselineRef.current.x + (gx - motionBaselineRef.current.x) / samples,
+          y: motionBaselineRef.current.y + (gy - motionBaselineRef.current.y) / samples,
+          z: motionBaselineRef.current.z + (gz - motionBaselineRef.current.z) / samples,
+          samples,
+        };
+        return;
       }
 
       const mapped = mapMotionToTilt(gx, gy, gz, motionBaselineRef.current);
