@@ -1,5 +1,12 @@
 let cachedTiltPermission = 'unknown';
+let pendingTiltPermissionRequest = null;
 const clampTilt = (value) => Math.max(-0.5, Math.min(0.5, value));
+function hasActiveUserGesture() {
+    if (typeof navigator === 'undefined' || !('userActivation' in navigator)) {
+        return true;
+    }
+    return navigator.userActivation.isActive;
+}
 export function getDeviceTiltSupport() {
     const orientationSupported = typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
     const motionSupported = typeof window !== 'undefined' && 'DeviceMotionEvent' in window;
@@ -18,44 +25,47 @@ export async function requestDeviceTiltPermission() {
         cachedTiltPermission = 'denied';
         return cachedTiltPermission;
     }
-    if (cachedTiltPermission === 'granted' || cachedTiltPermission === 'requested') {
+    if (cachedTiltPermission === 'granted') {
         return cachedTiltPermission;
     }
-    let permissionRequest = null;
+    if (pendingTiltPermissionRequest)
+        return pendingTiltPermissionRequest;
+    const permissionRequests = [];
     if (motionSupported) {
         const motionEvent = window.DeviceMotionEvent;
         if (typeof motionEvent.requestPermission === 'function') {
-            try {
-                permissionRequest = motionEvent.requestPermission();
-            }
-            catch {
-                permissionRequest = Promise.resolve('denied');
-            }
+            permissionRequests.push(() => motionEvent.requestPermission());
         }
     }
-    if (!permissionRequest && orientationSupported) {
+    if (orientationSupported) {
         const orientationEvent = window.DeviceOrientationEvent;
         if (typeof orientationEvent.requestPermission === 'function') {
-            try {
-                permissionRequest = orientationEvent.requestPermission();
-            }
-            catch {
-                permissionRequest = Promise.resolve('denied');
-            }
+            permissionRequests.push(() => orientationEvent.requestPermission());
         }
     }
-    if (!permissionRequest) {
+    if (permissionRequests.length === 0) {
         cachedTiltPermission = 'granted';
         return cachedTiltPermission;
     }
+    if (!hasActiveUserGesture()) {
+        return cachedTiltPermission;
+    }
     cachedTiltPermission = 'requested';
-    try {
-        cachedTiltPermission = (await permissionRequest) === 'granted' ? 'granted' : 'denied';
-    }
-    catch {
-        cachedTiltPermission = 'denied';
-    }
-    return cachedTiltPermission;
+    pendingTiltPermissionRequest = (async () => {
+        const permissionResults = permissionRequests.map((requestPermission) => {
+            try {
+                return requestPermission();
+            }
+            catch {
+                return Promise.resolve('denied');
+            }
+        });
+        const results = await Promise.all(permissionResults);
+        cachedTiltPermission = results.some((result) => result === 'granted') ? 'granted' : 'denied';
+        pendingTiltPermissionRequest = null;
+        return cachedTiltPermission;
+    })();
+    return pendingTiltPermissionRequest;
 }
 export function mapOrientationToTilt(beta, gamma, baseline) {
     const deltaBeta = beta - baseline.beta;

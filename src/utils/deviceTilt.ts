@@ -32,8 +32,16 @@ type DeviceMotionEventConstructorWithPermission = typeof DeviceMotionEvent & {
 };
 
 let cachedTiltPermission: TiltPermissionStatus = 'unknown';
+let pendingTiltPermissionRequest: Promise<TiltPermissionStatus> | null = null;
 
 const clampTilt = (value: number) => Math.max(-0.5, Math.min(0.5, value));
+
+function hasActiveUserGesture() {
+  if (typeof navigator === 'undefined' || !('userActivation' in navigator)) {
+    return true;
+  }
+  return navigator.userActivation.isActive;
+}
 
 export function getDeviceTiltSupport(): DeviceTiltSupport {
   const orientationSupported = typeof window !== 'undefined' && 'DeviceOrientationEvent' in window;
@@ -55,44 +63,49 @@ export async function requestDeviceTiltPermission(): Promise<TiltPermissionStatu
     cachedTiltPermission = 'denied';
     return cachedTiltPermission;
   }
-  if (cachedTiltPermission === 'granted' || cachedTiltPermission === 'requested') {
+  if (cachedTiltPermission === 'granted') {
     return cachedTiltPermission;
   }
+  if (pendingTiltPermissionRequest) return pendingTiltPermissionRequest;
 
-  let permissionRequest: Promise<PermissionState> | null = null;
+  const permissionRequests: Array<() => Promise<PermissionState>> = [];
   if (motionSupported) {
     const motionEvent = window.DeviceMotionEvent as DeviceMotionEventConstructorWithPermission;
     if (typeof motionEvent.requestPermission === 'function') {
-      try {
-        permissionRequest = motionEvent.requestPermission();
-      } catch {
-        permissionRequest = Promise.resolve('denied');
-      }
+      permissionRequests.push(() => motionEvent.requestPermission!());
     }
   }
-  if (!permissionRequest && orientationSupported) {
+  if (orientationSupported) {
     const orientationEvent = window.DeviceOrientationEvent as DeviceOrientationEventConstructorWithPermission;
     if (typeof orientationEvent.requestPermission === 'function') {
-      try {
-        permissionRequest = orientationEvent.requestPermission();
-      } catch {
-        permissionRequest = Promise.resolve('denied');
-      }
+      permissionRequests.push(() => orientationEvent.requestPermission!());
     }
   }
 
-  if (!permissionRequest) {
+  if (permissionRequests.length === 0) {
     cachedTiltPermission = 'granted';
+    return cachedTiltPermission;
+  }
+  if (!hasActiveUserGesture()) {
     return cachedTiltPermission;
   }
 
   cachedTiltPermission = 'requested';
-  try {
-    cachedTiltPermission = (await permissionRequest) === 'granted' ? 'granted' : 'denied';
-  } catch {
-    cachedTiltPermission = 'denied';
-  }
-  return cachedTiltPermission;
+  pendingTiltPermissionRequest = (async () => {
+    const permissionResults = permissionRequests.map((requestPermission) => {
+      try {
+        return requestPermission();
+      } catch {
+        return Promise.resolve('denied' as PermissionState);
+      }
+    });
+    const results = await Promise.all(permissionResults);
+    cachedTiltPermission = results.some((result) => result === 'granted') ? 'granted' : 'denied';
+    pendingTiltPermissionRequest = null;
+    return cachedTiltPermission;
+  })();
+
+  return pendingTiltPermissionRequest;
 }
 
 export function mapOrientationToTilt(

@@ -2,7 +2,7 @@ import { jsx as _jsx, jsxs as _jsxs } from "react/jsx-runtime";
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CtaButton } from '../components/CtaButton';
-import { getCachedTiltPermission, requestDeviceTiltPermission } from '../utils/deviceTilt';
+import { requestDeviceTiltPermission } from '../utils/deviceTilt';
 const TITLE_EXIT_DELAY_MS = 820;
 // Periodically glitches a data value for realism
 function DataLabel({ val, x, y, size = 8 }) {
@@ -214,14 +214,8 @@ export function TitleScreen() {
     }, []);
     useEffect(() => () => clearTimeout(startTimerRef.current), []);
     const requestTitleGyroPermission = useCallback(() => {
-        const permission = getCachedTiltPermission();
-        if (permission === 'granted' || permission === 'requested')
-            return;
         void requestDeviceTiltPermission();
     }, []);
-    useEffect(() => {
-        requestTitleGyroPermission();
-    }, [requestTitleGyroPermission]);
     const handleStart = () => {
         if (exiting)
             return;
@@ -229,7 +223,7 @@ export function TitleScreen() {
         clearTimeout(startTimerRef.current);
         startTimerRef.current = window.setTimeout(startRun, TITLE_EXIT_DELAY_MS);
     };
-    return (_jsxs("div", { className: "relative w-full h-full font-mono overflow-hidden select-none", onPointerDownCapture: requestTitleGyroPermission, onTouchStartCapture: requestTitleGyroPermission, style: { background: '#020812' }, children: [_jsx("style", { children: `
+    return (_jsxs("div", { className: "relative w-full h-full font-mono overflow-hidden select-none", onClickCapture: requestTitleGyroPermission, style: { background: '#020812' }, children: [_jsx("style", { children: `
         @keyframes scene-drift {
           0%   { transform: rotateY(-4deg) rotateX(2deg)   translateZ(-18px); }
           50%  { transform: rotateY(4deg)  rotateX(-2.2deg) translateZ(22px); }
