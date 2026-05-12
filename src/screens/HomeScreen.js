@@ -220,8 +220,10 @@ function HideoutBackgroundScene({ mouse }) {
                     } })] }) }));
 }
 function HideoutHologramDeck({ available, coins, intelCount, mouse, exiting = false, pressedTarget = null, onOpenBoard, onOpenMarket, }) {
-    const driftX = mouse.x * -12;
-    const driftY = mouse.y * -8;
+    const driftX = mouse.x * -20;
+    const driftY = mouse.y * -14;
+    const rotateY = mouse.x * 16;
+    const rotateX = mouse.y * -12;
     return (_jsx("div", { style: {
             position: 'absolute',
             inset: 0,
@@ -234,8 +236,9 @@ function HideoutHologramDeck({ available, coins, intelCount, mouse, exiting = fa
                 left: '50%',
                 top: '49%',
                 transformStyle: 'preserve-3d',
-                transform: `translateX(${driftX}px) translateY(${driftY}px) scale(1.04)`,
+                transform: `translateX(${driftX}px) translateY(${driftY}px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(1.04)`,
                 transition: 'transform 0.12s linear',
+                willChange: 'transform',
             }, children: _jsxs("div", { style: { position: 'absolute', transformStyle: 'preserve-3d', animation: 'hideout-scene-drift 18s ease-in-out infinite' }, children: [_jsx(HideoutGlassPanel, { tx: 0, ty: -108, tz: -86, rx: 6, ry: -8, w: 282, h: 154, glow: 0.52, onClick: onOpenBoard, ariaLabel: "Open darknet board", pressed: pressedTarget === 'board', disabled: exiting, children: _jsx(HideoutBoardButtonPreview, { available: available }) }), _jsx(HideoutGlassPanel, { tx: 0, ty: 100, tz: -112, rx: 7, ry: 8, w: 282, h: 154, glow: 0.46, color: "#ff7800", onClick: onOpenMarket, ariaLabel: "Open black market", pressed: pressedTarget === 'market', disabled: exiting, children: _jsx(HideoutMarketButtonPreview, { coins: coins, intelCount: intelCount }) })] }) }) }));
 }
 // ─── Main HomeScreen ──────────────────────────────────────────────────────────
@@ -274,8 +277,8 @@ export function HomeScreen() {
             }
             const base = tiltBaselineRef.current;
             pendingTiltRef.current = {
-                x: clampTilt((gamma - base.gamma) / 34),
-                y: clampTilt((beta - base.beta) / 42),
+                x: clampTilt((gamma - base.gamma) / 18),
+                y: clampTilt((beta - base.beta) / 24),
             };
             if (tiltFrameRef.current)
                 return;
@@ -283,8 +286,8 @@ export function HomeScreen() {
                 tiltFrameRef.current = 0;
                 const next = pendingTiltRef.current;
                 setMouse(prev => ({
-                    x: prev.x + (next.x - prev.x) * 0.18,
-                    y: prev.y + (next.y - prev.y) * 0.18,
+                    x: prev.x + (next.x - prev.x) * 0.32,
+                    y: prev.y + (next.y - prev.y) * 0.32,
                 }));
             });
         };
@@ -334,7 +337,7 @@ export function HomeScreen() {
         clearTimeout(exitTimerRef.current);
         exitTimerRef.current = window.setTimeout(() => set({ screen: key }), HIDEOUT_EXIT_DELAY_MS);
     }
-    return (_jsxs("div", { ref: containerRef, onPointerDown: requestDeviceTilt, onMouseMove: handleMouseMove, className: "relative w-full h-full overflow-hidden select-none font-mono", style: { background: '#020812' }, children: [_jsx("style", { children: `
+    return (_jsxs("div", { ref: containerRef, onPointerDown: requestDeviceTilt, onTouchStart: requestDeviceTilt, onMouseMove: handleMouseMove, className: "relative w-full h-full overflow-hidden select-none font-mono", style: { background: '#020812' }, children: [_jsx("style", { children: `
         @keyframes sp-flicker { 0%,100%{opacity:1} 91%{opacity:.82} 93%{opacity:.1} 95%{opacity:1} 97%{opacity:.65} }
         @keyframes sp-room-in { from{opacity:0;filter:blur(6px) brightness(0.15)} to{opacity:1;filter:blur(0) brightness(1)} }
         @keyframes sp-hud-in  { from{opacity:0;transform:translateY(-10px)} to{opacity:1;transform:translateY(0)} }

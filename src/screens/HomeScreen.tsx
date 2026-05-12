@@ -548,8 +548,10 @@ function HideoutHologramDeck({
   onOpenBoard: () => void;
   onOpenMarket: () => void;
 }) {
-  const driftX = mouse.x * -12;
-  const driftY = mouse.y * -8;
+  const driftX = mouse.x * -20;
+  const driftY = mouse.y * -14;
+  const rotateY = mouse.x * 16;
+  const rotateX = mouse.y * -12;
 
   return (
     <div
@@ -568,8 +570,9 @@ function HideoutHologramDeck({
           left: '50%',
           top: '49%',
           transformStyle: 'preserve-3d',
-          transform: `translateX(${driftX}px) translateY(${driftY}px) scale(1.04)`,
+          transform: `translateX(${driftX}px) translateY(${driftY}px) rotateY(${rotateY}deg) rotateX(${rotateX}deg) scale(1.04)`,
           transition: 'transform 0.12s linear',
+          willChange: 'transform',
         }}
       >
         <div style={{ position: 'absolute', transformStyle: 'preserve-3d', animation: 'hideout-scene-drift 18s ease-in-out infinite' }}>
@@ -656,8 +659,8 @@ export function HomeScreen() {
 
       const base = tiltBaselineRef.current;
       pendingTiltRef.current = {
-        x: clampTilt((gamma - base.gamma) / 34),
-        y: clampTilt((beta - base.beta) / 42),
+        x: clampTilt((gamma - base.gamma) / 18),
+        y: clampTilt((beta - base.beta) / 24),
       };
 
       if (tiltFrameRef.current) return;
@@ -665,8 +668,8 @@ export function HomeScreen() {
         tiltFrameRef.current = 0;
         const next = pendingTiltRef.current;
         setMouse(prev => ({
-          x: prev.x + (next.x - prev.x) * 0.18,
-          y: prev.y + (next.y - prev.y) * 0.18,
+          x: prev.x + (next.x - prev.x) * 0.32,
+          y: prev.y + (next.y - prev.y) * 0.32,
         }));
       });
     };
@@ -722,6 +725,7 @@ export function HomeScreen() {
     <div
       ref={containerRef}
       onPointerDown={requestDeviceTilt}
+      onTouchStart={requestDeviceTilt}
       onMouseMove={handleMouseMove}
       className="relative w-full h-full overflow-hidden select-none font-mono"
       style={{ background: '#020812' }}
