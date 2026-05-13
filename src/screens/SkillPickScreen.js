@@ -2,6 +2,7 @@ import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SKILL_DEFS } from '../game/skills';
+import { playSfx } from '../utils/sfx';
 export function SkillPickScreen() {
     const offeredSkills = useGameStore((s) => s.offeredSkills);
     const activeSkills = useGameStore((s) => s.activeSkills);
@@ -14,7 +15,10 @@ export function SkillPickScreen() {
                             : 'ここまで生き延びた報酬だ。次のウェーブから適用される' })] }), activeSkills.length > 0 && (_jsxs("div", { className: "px-5 pb-3 pt-1", children: [_jsx("div", { className: "text-[9px] text-white/25 tracking-[0.25em] mb-2", children: "INSTALLED" }), _jsx("div", { className: "flex flex-wrap gap-2", children: activeSkills.map((id) => {
                             const def = SKILL_DEFS[id];
                             return (_jsx("div", { className: "text-[9px] px-2 py-1 tracking-[0.1em]", style: { border: `1px solid ${def.color}40`, color: def.color }, children: def.name }, id));
-                        }) })] })), _jsx("div", { className: "flex-1 px-4 flex flex-col gap-3 justify-center py-2", children: offeredSkills.map((id) => (_jsx(SkillCard, { skill: SKILL_DEFS[id], onPick: () => pickSkill(id) }, id))) }), _jsx("div", { className: "absolute bottom-1.5 left-0 right-0 text-center text-[9px] text-white/12 tracking-[0.3em]", children: "v0.1.4 \u00B7 NULLIFIER" })] }));
+                        }) })] })), _jsx("div", { className: "flex-1 px-4 flex flex-col gap-3 justify-center py-2", children: offeredSkills.map((id) => (_jsx(SkillCard, { skill: SKILL_DEFS[id], onPick: () => {
+                        playSfx('skill');
+                        pickSkill(id);
+                    } }, id))) }), _jsx("div", { className: "absolute bottom-1.5 left-0 right-0 text-center text-[9px] text-white/12 tracking-[0.3em]", children: "v0.1.4 \u00B7 NULLIFIER" })] }));
 }
 function SkillCard({ skill, onPick }) {
     const [hovered, setHovered] = useState(false);

@@ -11,13 +11,18 @@ import { WaveResultScreen } from './screens/WaveResultScreen';
 import { ResultScreen } from './screens/ResultScreen';
 import { ScreenTransition } from './components/ScreenTransition';
 import { DebugMenu } from './components/DebugMenu';
+import { unlockSfx } from './utils/sfx';
 
 export default function App() {
   const screen = useGameStore((s) => s.screen);
 
   return (
     <div className="app-viewport">
-      <div className="app-frame">
+      <div
+        className="app-frame"
+        onPointerDownCapture={unlockSfx}
+        onKeyDownCapture={unlockSfx}
+      >
         {/* screen-enter: key でスクリーン変更のたびに再マウント → アニメ再実行 */}
         <div key={screen} className="w-full h-full screen-enter">
           {screen === 'title'        && <TitleScreen />}

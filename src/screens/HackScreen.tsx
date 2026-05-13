@@ -3,6 +3,7 @@ import { PuzzleCanvas } from '../components/PuzzleCanvas';
 import { TraceBar } from '../components/TraceBar';
 import { useGameStore, WAVES_PER_STAGE } from '../store/gameStore';
 import { SKILL_DEFS, type SkillId } from '../game/skills';
+import { playSfx } from '../utils/sfx';
 
 const CLEARED_TELEMETRY_CARDS = [
   { label: 'AUTH', value: 'CHAIN VERIFIED', meta: 'SIG 7A-01' },
@@ -129,6 +130,11 @@ export function HackScreen() {
     setSkillsOpen(false);
   }, [startedAt]);
 
+  useEffect(() => {
+    if (outcome === 'clearing') playSfx('clear');
+    if (outcome === 'traced') playSfx('fail');
+  }, [outcome]);
+
   const elapsedMs  = startedAt ? Math.max(0, (clearedAt ?? now) - startedAt - pauseOffsetMs) : 0;
   const elapsedSec = elapsedMs / 1000;
   const rawTrace   = trace.initial + trace.baseRatePerSec * elapsedSec + rotations * trace.rotationCost;
@@ -173,6 +179,15 @@ export function HackScreen() {
 
   const accentColor  = danger ? '#ff4d6d' : '#4da3ff';
   const accentAlpha  = danger ? 'rgba(255,77,109,' : 'rgba(77,163,255,';
+  const handleCellTap = (cellIndex: number) => {
+    const cell = board.cells[cellIndex];
+    if (outcome !== 'pending' || !cell || cell.type === 'empty' || cell.fixed) {
+      playSfx('blocked');
+    } else {
+      playSfx('rotate');
+    }
+    rotateCell(cellIndex);
+  };
   const endRun = () => {
     setMenuOpen(false);
     setSkillsOpen(false);
@@ -385,7 +400,7 @@ export function HackScreen() {
         <PuzzleCanvas
           board={board}
           evalResult={evalResult}
-          onCellTap={rotateCell}
+          onCellTap={handleCellTap}
           failed={outcome === 'traced'}
           danger={danger}
           clearFlow={outcome === 'clearing'}

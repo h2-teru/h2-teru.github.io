@@ -8,6 +8,7 @@ import {
   mapOrientationToTilt,
   type TiltVector,
 } from '../utils/deviceTilt';
+import { playSfx } from '../utils/sfx';
 
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 
@@ -774,6 +775,7 @@ export function HomeScreen() {
 
   function goToWithExit(key: Screen) {
     if (exitingTo) return;
+    playSfx('panel');
     setExitingTo(key);
     clearTimeout(exitTimerRef.current);
     exitTimerRef.current = window.setTimeout(() => set({ screen: key }), HIDEOUT_EXIT_DELAY_MS);
@@ -907,7 +909,10 @@ export function HomeScreen() {
       }}>
         <div>
           <button
-            onClick={goTitle}
+            onClick={() => {
+              playSfx('back');
+              goTitle();
+            }}
             disabled={Boolean(exitingTo)}
             style={{
               background: 'none', border: 'none', cursor: 'pointer', padding: 0,

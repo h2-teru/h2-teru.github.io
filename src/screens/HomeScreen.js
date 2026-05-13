@@ -4,6 +4,7 @@ import { STAGES, RISK_COLOR } from '../data/stages';
 import { useGameStore } from '../store/gameStore';
 import { MapSelectionPulseEffects } from '../components/MapSelectionPulse';
 import { getDeviceTiltSupport, mapMotionToTilt, mapOrientationToTilt, } from '../utils/deviceTilt';
+import { playSfx } from '../utils/sfx';
 // ─── Rank ─────────────────────────────────────────────────────────────────────
 const HIDEOUT_EXIT_DELAY_MS = 560;
 const HIDEOUT_TILT_DEADZONE = 0.03;
@@ -388,6 +389,7 @@ export function HomeScreen() {
     function goToWithExit(key) {
         if (exitingTo)
             return;
+        playSfx('panel');
         setExitingTo(key);
         clearTimeout(exitTimerRef.current);
         exitTimerRef.current = window.setTimeout(() => set({ screen: key }), HIDEOUT_EXIT_DELAY_MS);
@@ -472,7 +474,10 @@ export function HomeScreen() {
                     display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
                     animation: entered ? 'sp-hud-in 0.6s 0.3s ease forwards' : 'none',
                     opacity: 0,
-                }, children: [_jsxs("div", { children: [_jsx("button", { onClick: goTitle, disabled: Boolean(exitingTo), style: {
+                }, children: [_jsxs("div", { children: [_jsx("button", { onClick: () => {
+                                    playSfx('back');
+                                    goTitle();
+                                }, disabled: Boolean(exitingTo), style: {
                                     background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                                     fontSize: 9, letterSpacing: '0.18em', color: '#ffffff',
                                     fontFamily: 'monospace',

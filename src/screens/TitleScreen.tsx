@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { CtaButton } from '../components/CtaButton';
 import { requestDeviceTiltPermission } from '../utils/deviceTilt';
+import { playSfx } from '../utils/sfx';
 
 const TITLE_EXIT_DELAY_MS = 820;
 
@@ -282,6 +283,7 @@ export function TitleScreen() {
 
   const handleStart = () => {
     if (exiting) return;
+    playSfx('start');
     setExiting(true);
     clearTimeout(startTimerRef.current);
     startTimerRef.current = window.setTimeout(startRun, TITLE_EXIT_DELAY_MS);

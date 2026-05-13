@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SKILL_DEFS, type Skill } from '../game/skills';
+import { playSfx } from '../utils/sfx';
 
 export function SkillPickScreen() {
   const offeredSkills = useGameStore((s) => s.offeredSkills);
@@ -63,7 +64,10 @@ export function SkillPickScreen() {
           <SkillCard
             key={id}
             skill={SKILL_DEFS[id]}
-            onPick={() => pickSkill(id)}
+            onPick={() => {
+              playSfx('skill');
+              pickSkill(id);
+            }}
           />
         ))}
       </div>

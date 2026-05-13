@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { EQUIPMENT_CATEGORY_COLOR, EQUIPMENT_LIST, RARITY_COLOR, INTEL_TYPE_LABEL } from '../game/market';
 import { CtaButton } from '../components/CtaButton';
+import { playSfx } from '../utils/sfx';
 const MARKET_ORANGE = '#ff7800';
 const SIGNAL_BLUE = '#4da3ff';
 const RARITY_ORDER = {
@@ -308,6 +309,7 @@ export function ShopScreen() {
             return;
         const ids = [...selected];
         const earned = marketValue(intel.filter(i => ids.includes(i.id)));
+        playSfx('sell');
         sellIntel(ids);
         setSelected(new Set());
         setFlash(`+${earned.toLocaleString()}¢ 獲得`);
@@ -315,27 +317,32 @@ export function ShopScreen() {
     }
     function requestBuy(item) {
         if (knownPurchasedEquip.includes(item.id)) {
+            playSfx('blocked');
             setFlash(`${item.name} は導入済み`);
             setTimeout(() => setFlash(null), 2000);
             return;
         }
         if (coins < item.price) {
+            playSfx('blocked');
             setFlash(`${formatCred(item.price - coins)} 不足`);
             setTimeout(() => setFlash(null), 2000);
             return;
         }
+        playSfx('ui');
         setPendingPurchase(item);
     }
     function confirmBuy() {
         if (!pendingPurchase)
             return;
         if (knownPurchasedEquip.includes(pendingPurchase.id)) {
+            playSfx('blocked');
             setFlash(`${pendingPurchase.name} は導入済み`);
             setPendingPurchase(null);
             setTimeout(() => setFlash(null), 2000);
             return;
         }
         if (coins < pendingPurchase.price) {
+            playSfx('blocked');
             setFlash(`${formatCred(pendingPurchase.price - coins)} 不足`);
             setPendingPurchase(null);
             setTimeout(() => setFlash(null), 2000);
@@ -343,6 +350,7 @@ export function ShopScreen() {
         }
         const id = pendingPurchase.id;
         const name = pendingPurchase.name;
+        playSfx('buy');
         buyEquipment(id);
         setPendingPurchase(null);
         setFlash(`${name} を購入`);
@@ -411,7 +419,10 @@ export function ShopScreen() {
                             borderBottom: `1px solid ${accentColor}18`,
                             display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
                             flexShrink: 0,
-                        }, children: [_jsxs("div", { children: [_jsx("button", { onClick: goHome, style: {
+                        }, children: [_jsxs("div", { children: [_jsx("button", { onClick: () => {
+                                            playSfx('back');
+                                            goHome();
+                                        }, style: {
                                             background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                                             fontSize: 9, letterSpacing: '0.18em', color: '#ffffff',
                                             fontFamily: 'monospace',
@@ -440,7 +451,11 @@ export function ShopScreen() {
                         }, children: [_jsx("span", { style: { color: `${MARKET_ORANGE}cc` }, children: "BROKER SIGNAL" }), _jsx("span", { style: { overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }, children: marketSignal })] }), _jsx("div", { style: {
                             display: 'flex', flexShrink: 0,
                             borderBottom: `1px solid rgba(255,255,255,0.06)`,
-                        }, children: ['sell', 'buy', 'installed'].map(t => (_jsx("button", { onClick: () => { setTab(t); setSelected(new Set()); }, style: {
+                        }, children: ['sell', 'buy', 'installed'].map(t => (_jsx("button", { onClick: () => {
+                                playSfx('tab');
+                                setTab(t);
+                                setSelected(new Set());
+                            }, style: {
                                 flex: 1, padding: '10px 0',
                                 background: tab === t ? `${accentColor}12` : 'transparent',
                                 border: 'none',
@@ -567,5 +582,8 @@ export function ShopScreen() {
                             padding: '6px 16px',
                             borderTop: '1px solid rgba(255,255,255,0.03)',
                             flexShrink: 0,
-                        }, children: _jsx("div", { style: { fontSize: 7, color: 'rgba(255,255,255,0.1)', letterSpacing: '0.3em' }, children: "v0.1.4 \u00B7 NULLIFIER" }) })] }), pendingPurchase && (_jsx(PurchaseConfirmModal, { equip: pendingPurchase, balance: coins, canAfford: coins >= pendingPurchase.price && !knownPurchasedEquip.includes(pendingPurchase.id), onCancel: () => setPendingPurchase(null), onConfirm: confirmBuy }))] }));
+                        }, children: _jsx("div", { style: { fontSize: 7, color: 'rgba(255,255,255,0.1)', letterSpacing: '0.3em' }, children: "v0.1.4 \u00B7 NULLIFIER" }) })] }), pendingPurchase && (_jsx(PurchaseConfirmModal, { equip: pendingPurchase, balance: coins, canAfford: coins >= pendingPurchase.price && !knownPurchasedEquip.includes(pendingPurchase.id), onCancel: () => {
+                    playSfx('back');
+                    setPendingPurchase(null);
+                }, onConfirm: confirmBuy }))] }));
 }

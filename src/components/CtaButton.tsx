@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, CSSProperties, PropsWithChildren } from 'react';
+import { playSfx } from '../utils/sfx';
 
 type CtaVariant = 'primary' | 'danger' | 'ghost' | 'muted' | 'custom';
 
@@ -36,15 +37,24 @@ const variantStyles: Record<CtaVariant, CSSProperties> = {
 export function CtaButton({
   children,
   className = '',
+  disabled,
   marker = false,
+  onClick,
   style,
   type = 'button',
   variant = 'primary',
   ...buttonProps
 }: PropsWithChildren<CtaButtonProps>) {
+  const handleClick: ButtonHTMLAttributes<HTMLButtonElement>['onClick'] = (event) => {
+    if (!disabled) playSfx('ui');
+    onClick?.(event);
+  };
+
   return (
     <button
       type={type}
+      disabled={disabled}
+      onClick={handleClick}
       className={`w-full h-11 flex items-center justify-start pl-4 pr-4 text-left leading-none tracking-[0.22em] text-[13px] font-medium transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed ${className}`}
       style={{ ...variantStyles[variant], ...style }}
       {...buttonProps}
